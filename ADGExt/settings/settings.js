@@ -352,7 +352,11 @@ function loadPreferences() {
     // Load refresh interval
     chrome.storage.sync.get(['refreshInterval'], (data) => {
         if (data.refreshInterval !== undefined) {
-            refreshIntervalSelect.value = data.refreshInterval;
+            // Set the dropdown value - stored as seconds
+            refreshIntervalSelect.value = data.refreshInterval.toString();
+        } else {
+            // Default to 60 seconds
+            refreshIntervalSelect.value = '60';
         }
     });
     
@@ -387,7 +391,18 @@ function saveThemePreference() {
  */
 function saveRefreshInterval() {
     const refreshInterval = parseInt(refreshIntervalSelect.value);
-    chrome.storage.sync.set({ refreshInterval });
+    
+    // Save to both local and sync storage to ensure consistency
+    chrome.storage.sync.set({ refreshInterval }, () => {
+        // Update the value in local storage for the background script
+        chrome.storage.local.set({ refreshInterval: refreshInterval * 1000 }, () => {
+            // Notify the background script to update its timer
+            chrome.runtime.sendMessage({
+                action: 'updateRefreshInterval',
+                refreshInterval: refreshInterval * 1000 // Convert to milliseconds
+            });
+        });
+    });
 }
 
 /**

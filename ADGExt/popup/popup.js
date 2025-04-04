@@ -407,17 +407,22 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to disable protection temporarily
   function disableTemporarily(seconds) {
+    // Convert seconds to minutes for the API call
+    const minutes = seconds / 60;
+    
     // Send message to background script to disable protection temporarily
     chrome.runtime.sendMessage({
       action: 'disableTemporarily',
-      seconds: seconds
+      minutes: minutes
     }, function(response) {
       if (response && response.success) {
+        console.log(`Protection temporarily disabled for ${minutes} minutes`);
+        
         // Update button to show it's counting
         tempDisableBtn.classList.add('counting');
         
         // Calculate end time and start countdown
-        const endTime = Date.now() + (seconds * 1000);
+        const endTime = new Date(Date.now() + (seconds * 1000));
         startCountdown(endTime);
       } else {
         showErrorNotification(response?.error?.message || getMessage('failedToDisable'));
@@ -587,10 +592,30 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to check if protection is temporarily disabled
   function checkTemporaryDisableStatus() {
     chrome.runtime.sendMessage({ action: 'getTemporaryDisableStatus' }, function(response) {
-      if (response && response.isTemporarilyDisabled) {
+      if (response && response.isTemporarilyDisabled && response.endTime) {
+        console.log('Protection is temporarily disabled until:', response.endTime);
+        
         // Protection is temporarily disabled, show countdown
         tempDisableBtn.classList.add('counting');
-        startCountdown(response.endTime);
+        
+        // Parse the end time if it's a string
+        const endTime = typeof response.endTime === 'string' 
+          ? new Date(response.endTime) 
+          : response.endTime;
+          
+        // Start the countdown with the current end time
+        startCountdown(endTime);
+      } else {
+        console.log('Protection is not temporarily disabled');
+        
+        // Make sure button is in the right state
+        tempDisableBtn.classList.remove('counting');
+        tempDisableBtn.textContent = getMessage('disableTemporarily');
+        
+        // Clear any existing interval
+        if (tempDisableBtn.dataset.countdownInterval) {
+          clearInterval(tempDisableBtn.dataset.countdownInterval);
+        }
       }
     });
   }
@@ -1035,4 +1060,18 @@ document.addEventListener('DOMContentLoaded', function() {
       showSuccessNotification(getMessage('loggedOut') || 'Successfully logged out');
     });
   }
+
+  // Listen for messages from background script
+  chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
+    // Handle auto re-enable message
+    if (message.action === 'protectionAutoReEnabled') {
+      console.log('Protection was automatically re-enabled, refreshing UI');
+      
+      // Re-fetch status and refresh the UI
+      refreshStatus();
+      
+      // Show notification if we're on the popup page
+      showSuccessNotification(getMessage('protectionAutoReEnabled') || 'Protection has been automatically re-enabled');
+    }
+  });
 }); 

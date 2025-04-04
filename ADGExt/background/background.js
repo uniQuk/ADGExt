@@ -9,6 +9,10 @@ let statusCheckInterval = null;
 let activeInstanceId = null;
 let previousProtectionStatus = null;
 
+// Variables for temporary disable functionality
+let disableTimer = null;
+let disableEndTime = null;
+
 // Status check interval in milliseconds (default: 60 seconds)
 const STATUS_CHECK_INTERVAL = 60000;
 
@@ -591,9 +595,25 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
       });
     return true;
   } else if (request.action === 'cancelTemporaryDisable') {
-    // ... existing code ...
+    // Handle cancel temporary disable request
+    cancelTemporaryDisable()
+      .then(result => {
+        sendResponse(result);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error });
+      });
+    return true;
   } else if (request.action === 'getTemporaryDisableStatus') {
-    // ... existing code ...
+    // Return the current temporary disable status
+    getTemporaryDisableStatus()
+      .then(result => {
+        sendResponse(result);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error });
+      });
+    return true;
   } else if (request.action === 'getConnectionStatus') {
     getActiveInstance().then(instance => {
       sendResponse({
@@ -619,10 +639,36 @@ chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
     clearConnectionState();
     sendResponse({ success: true });
     return true;
+  } else if (request.action === 'updateRefreshInterval') {
+    // Update the refresh interval for status checks
+    updateRefreshInterval(request.refreshInterval);
+    sendResponse({ success: true });
+    return true;
   }
   
   return false;
 });
+
+/**
+ * Update the refresh interval for status checks
+ * @param {number} interval - New interval in milliseconds
+ */
+function updateRefreshInterval(interval) {
+  console.log(`Updating refresh interval to ${interval / 1000} seconds`);
+  
+  // Store the new interval
+  chrome.storage.local.set({ refreshInterval: interval });
+  
+  // Restart periodic checks with the new interval
+  stopPeriodicStatusChecks();
+  
+  // Only start checks if auto refresh is enabled
+  chrome.storage.local.get(['autoRefresh'], function(result) {
+    if (result.autoRefresh !== false) {
+      startPeriodicStatusChecks();
+    }
+  });
+}
 
 /**
  * Clear the active connection state
@@ -705,13 +751,27 @@ async function disableTemporarily(minutes) {
       // Get settings
       const { showNotifications } = await chrome.storage.sync.get(['showNotifications']);
       
-      // Update local storage with new protection state
+      // Calculate end time
+      const startTime = new Date();
+      disableEndTime = new Date(startTime.getTime() + minutes * 60 * 1000);
+      
+      // Store disable info in storage for persistence between popup sessions
       await chrome.storage.local.set({
         protectionEnabled: false,
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: startTime.toISOString(),
         temporaryDisableMinutes: minutes,
-        temporaryDisableStartTime: new Date().toISOString()
+        temporaryDisableStartTime: startTime.toISOString(),
+        temporaryDisableEndTime: disableEndTime.toISOString()
       });
+      
+      // Set a timer to re-enable protection
+      if (disableTimer) {
+        clearTimeout(disableTimer);
+      }
+      
+      disableTimer = setTimeout(() => {
+        reEnableProtection();
+      }, minutes * 60 * 1000);
       
       // Show notification if settings allow
       if (showNotifications && previousProtectionStatus !== false) {
@@ -730,6 +790,130 @@ async function disableTemporarily(minutes) {
     });
   } catch (error) {
     console.error('Failed to disable temporarily:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Cancel temporary disable and re-enable protection immediately
+ */
+async function cancelTemporaryDisable() {
+  try {
+    console.log('Cancelling temporary disable and re-enabling protection');
+    
+    // Clear the timer
+    if (disableTimer) {
+      clearTimeout(disableTimer);
+      disableTimer = null;
+    }
+    disableEndTime = null;
+    
+    // Clear temporary disable info from storage
+    await chrome.storage.local.remove([
+      'temporaryDisableMinutes',
+      'temporaryDisableStartTime',
+      'temporaryDisableEndTime'
+    ]);
+    
+    // Re-enable protection
+    const result = await toggleProtection(true);
+    
+    return { success: true, data: result.data };
+  } catch (error) {
+    console.error('Failed to cancel temporary disable:', error);
+    return { success: false, error };
+  }
+}
+
+/**
+ * Get the current temporary disable status
+ */
+async function getTemporaryDisableStatus() {
+  try {
+    // Check storage first for persistence between popup sessions
+    const data = await chrome.storage.local.get([
+      'temporaryDisableEndTime',
+      'protectionEnabled'
+    ]);
+    
+    // If protection is enabled, it's not temporarily disabled
+    if (data.protectionEnabled === true) {
+      return { isTemporarilyDisabled: false };
+    }
+    
+    // Check if we have an end time in storage
+    if (data.temporaryDisableEndTime) {
+      const endTime = new Date(data.temporaryDisableEndTime);
+      const now = new Date();
+      
+      // If the end time is in the future, it's still temporarily disabled
+      if (endTime > now) {
+        return {
+          isTemporarilyDisabled: true,
+          endTime: endTime
+        };
+      } else {
+        // End time has passed, make sure protection is re-enabled
+        await reEnableProtection();
+        return { isTemporarilyDisabled: false };
+      }
+    }
+    
+    // Check in-memory variables as fallback
+    if (disableEndTime) {
+      const now = new Date();
+      
+      if (disableEndTime > now) {
+        return {
+          isTemporarilyDisabled: true,
+          endTime: disableEndTime
+        };
+      } else {
+        // End time has passed, make sure protection is re-enabled
+        await reEnableProtection();
+        return { isTemporarilyDisabled: false };
+      }
+    }
+    
+    return { isTemporarilyDisabled: false };
+  } catch (error) {
+    console.error('Failed to get temporary disable status:', error);
+    return { isTemporarilyDisabled: false, error };
+  }
+}
+
+/**
+ * Re-enable protection after temporary disable period
+ */
+async function reEnableProtection() {
+  try {
+    console.log('Re-enabling protection after temporary disable');
+    
+    // Clear timer variables
+    disableTimer = null;
+    disableEndTime = null;
+    
+    // Clear temporary disable info from storage
+    await chrome.storage.local.remove([
+      'temporaryDisableMinutes',
+      'temporaryDisableStartTime',
+      'temporaryDisableEndTime'
+    ]);
+    
+    // Toggle protection back on
+    const result = await toggleProtection(true);
+    
+    // Send refresh message to any open popups to update UI
+    chrome.runtime.sendMessage({ 
+      action: 'protectionAutoReEnabled',
+      result: result
+    }).catch(() => {
+      // Ignore errors if no popups are open to receive the message
+    });
+    
+    return result;
+  } catch (error) {
+    console.error('Failed to re-enable protection:', error);
     return { success: false, error };
   }
 }
