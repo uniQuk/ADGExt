@@ -2,32 +2,32 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>AdGuard Home Manager</title>
+  <title data-i18n="extName">AdGuard Home Manager</title>
   <link rel="stylesheet" href="popup.css">
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>AdGuard Home</h1>
-      <button id="settings-button" class="settings-button" title="Settings">⚙️</button>
+      <h1 data-i18n="extName">AdGuard Home</h1>
+      <button id="settings-button" class="settings-button" data-i18n-title="settingsTitle" title="Settings">⚙️</button>
     </div>
     
     <div id="connection-form">
-      <h2>Connect to AdGuard Home</h2>
+      <h2 data-i18n="connectToAdGuard">Connect to AdGuard Home</h2>
       <form id="connect-form">
         <div class="form-group">
-          <label for="url">Server URL:</label>
-          <input type="text" id="url" placeholder="http://localhost:3000" required>
+          <label for="url" data-i18n="serverUrl">Server URL:</label>
+          <input type="text" id="url" data-i18n-placeholder="serverUrl" placeholder="http://localhost:3000" required>
         </div>
         <div class="form-group">
-          <label for="username">Username:</label>
-          <input type="text" id="username" required>
+          <label for="username" data-i18n="username">Username:</label>
+          <input type="text" id="username" data-i18n-placeholder="username" required>
         </div>
         <div class="form-group">
-          <label for="password">Password:</label>
-          <input type="password" id="password" required>
+          <label for="password" data-i18n="password">Password:</label>
+          <input type="password" id="password" data-i18n-placeholder="password" required>
         </div>
-        <button type="submit" id="connect-button">Connect</button>
+        <button type="submit" id="connect-button" data-i18n="connect">Connect</button>
       </form>
     </div>
     
@@ -38,16 +38,16 @@
       
       <div id="protection-toggle-container" class="protection-container">
         <div class="toggle-header">
-          <h2>Protection</h2>
+          <h2 data-i18n="protection">Protection</h2>
           <div class="toggle-switch">
             <input type="checkbox" id="protection-toggle" class="toggle-input">
             <label for="protection-toggle" class="toggle-label"></label>
           </div>
         </div>
         <div class="temporary-disable hidden">
-          <button id="temp-disable-btn" class="temp-disable-btn">Disable Temporarily</button>
+          <button id="temp-disable-btn" class="temp-disable-btn" data-i18n="disableTemporarily">Disable Temporarily</button>
           <div id="timer-modal" class="timer-modal hidden">
-            <h3>Disable protection for:</h3>
+            <h3 data-i18n="disableFor">Disable protection for:</h3>
             <div class="timer-options">
               <button class="timer-option" data-minutes="5">5 minutes</button>
               <button class="timer-option" data-minutes="15">15 minutes</button>
@@ -57,17 +57,17 @@
               <button class="timer-option" data-minutes="360">6 hours</button>
             </div>
             <div class="custom-timer">
-              <label for="custom-minutes">Custom:</label>
+              <label for="custom-minutes" data-i18n="custom">Custom:</label>
               <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Minutes">
-              <button id="apply-custom-timer">Apply</button>
+              <button id="apply-custom-timer" data-i18n="apply">Apply</button>
             </div>
             <div class="timer-modal-footer">
-              <button id="cancel-timer-selection">Cancel</button>
+              <button id="cancel-timer-selection" data-i18n="cancel">Cancel</button>
             </div>
           </div>
           <div id="timer-container" class="timer-container hidden">
             <span id="timer-value">--:--</span>
-            <button id="cancel-timer-btn" class="cancel-timer-btn">Cancel</button>
+            <button id="cancel-timer-btn" class="cancel-timer-btn" data-i18n="cancel">Cancel</button>
           </div>
         </div>
       </div>
@@ -82,6 +82,6 @@
     </div>
   </div>
   
-  <script src="popup.js"></script>
+  <script type="module" src="popup.js"></script>
 </body>
 </html> 

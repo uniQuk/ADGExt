@@ -1,0 +1,284 @@
+{
+  "extName": {
+    "message": "AdGuard Home Manager",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Manage your local AdGuard Home installations directly from your browser",
+    "description": "Extension description"
+  },
+  "settingsTitle": {
+    "message": "Settings",
+    "description": "Title for the settings page"
+  },
+  "back": {
+    "message": "Back",
+    "description": "Back button text"
+  },
+  "manageInstances": {
+    "message": "Manage Instances",
+    "description": "Title for the instances management section"
+  },
+  "addNewInstance": {
+    "message": "Add New Instance",
+    "description": "Button to add a new instance"
+  },
+  "preferences": {
+    "message": "Preferences",
+    "description": "Title for the preferences section"
+  },
+  "theme": {
+    "message": "Theme",
+    "description": "Label for theme selector"
+  },
+  "themeAuto": {
+    "message": "Auto (System)",
+    "description": "Auto theme option"
+  },
+  "themeLight": {
+    "message": "Light",
+    "description": "Light theme option"
+  },
+  "themeDark": {
+    "message": "Dark",
+    "description": "Dark theme option"
+  },
+  "refreshInterval": {
+    "message": "Auto-refresh interval",
+    "description": "Label for refresh interval selector"
+  },
+  "refreshDisabled": {
+    "message": "Disabled",
+    "description": "Disabled refresh option"
+  },
+  "seconds": {
+    "message": "seconds",
+    "description": "Seconds unit"
+  },
+  "minute": {
+    "message": "minute",
+    "description": "Minute unit (singular)"
+  },
+  "minutes": {
+    "message": "minutes",
+    "description": "Minutes unit (plural)"
+  },
+  "showNotifications": {
+    "message": "Show notifications for status changes",
+    "description": "Label for notifications checkbox"
+  },
+  "addInstance": {
+    "message": "Add Instance",
+    "description": "Modal title for adding an instance"
+  },
+  "editInstance": {
+    "message": "Edit Instance",
+    "description": "Modal title for editing an instance"
+  },
+  "instanceName": {
+    "message": "Name",
+    "description": "Label for instance name input"
+  },
+  "instanceUrl": {
+    "message": "AdGuard Home URL",
+    "description": "Label for instance URL input"
+  },
+  "username": {
+    "message": "Username",
+    "description": "Label for username input"
+  },
+  "password": {
+    "message": "Password",
+    "description": "Label for password input"
+  },
+  "save": {
+    "message": "Save",
+    "description": "Save button text"
+  },
+  "cancel": {
+    "message": "Cancel",
+    "description": "Cancel button text"
+  },
+  "deleteConfirm": {
+    "message": "Are you sure you want to delete this instance?",
+    "description": "Confirmation message for deleting an instance"
+  },
+  "noInstances": {
+    "message": "No instances configured yet. Add your first AdGuard Home instance.",
+    "description": "Message shown when no instances are configured"
+  },
+  "connectToAdGuard": {
+    "message": "Connect to AdGuard Home",
+    "description": "Title for the connection form"
+  },
+  "serverUrl": {
+    "message": "Server URL:",
+    "description": "Label for server URL input"
+  },
+  "connect": {
+    "message": "Connect",
+    "description": "Connect button text"
+  },
+  "connecting": {
+    "message": "Connecting...",
+    "description": "Text shown while connecting"
+  },
+  "status": {
+    "message": "Status:",
+    "description": "Label for status display"
+  },
+  "connected": {
+    "message": "Connected",
+    "description": "Connected status text"
+  },
+  "disconnected": {
+    "message": "Disconnected",
+    "description": "Disconnected status text"
+  },
+  "protection": {
+    "message": "Protection",
+    "description": "Label for protection status"
+  },
+  "enabled": {
+    "message": "Enabled",
+    "description": "Enabled status text"
+  },
+  "disabled": {
+    "message": "Disabled",
+    "description": "Disabled status text"
+  },
+  "disableTemporarily": {
+    "message": "Disable Temporarily",
+    "description": "Button to disable protection temporarily"
+  },
+  "disableFor": {
+    "message": "Disable protection for:",
+    "description": "Title for temporary disable modal"
+  },
+  "custom": {
+    "message": "Custom:",
+    "description": "Label for custom timer input"
+  },
+  "apply": {
+    "message": "Apply",
+    "description": "Apply button text"
+  },
+  "hour": {
+    "message": "hour",
+    "description": "Hour unit (singular)"
+  },
+  "hours": {
+    "message": "hours",
+    "description": "Hours unit (plural)"
+  },
+  "invalidMinutes": {
+    "message": "Please enter a valid number of minutes",
+    "description": "Error message for invalid minutes input"
+  },
+  "dnsQueryStats": {
+    "message": "DNS Query Statistics",
+    "description": "Title for DNS query statistics section"
+  },
+  "dnsQueries": {
+    "message": "DNS Queries",
+    "description": "Label for DNS queries statistic"
+  },
+  "blockedQueries": {
+    "message": "Blocked Queries",
+    "description": "Label for blocked queries statistic"
+  },
+  "blockingRate": {
+    "message": "Blocking Rate",
+    "description": "Label for blocking rate statistic"
+  },
+  "avgProcessing": {
+    "message": "Avg Processing",
+    "description": "Label for average processing time statistic"
+  },
+  "lastUpdated": {
+    "message": "Last updated:",
+    "description": "Label for last updated timestamp"
+  },
+  "refresh": {
+    "message": "Refresh",
+    "description": "Refresh button text"
+  },
+  "refreshing": {
+    "message": "Refreshing...",
+    "description": "Text shown while refreshing"
+  },
+  "loadingStats": {
+    "message": "Loading stats...",
+    "description": "Text shown while loading statistics"
+  },
+  "resetConnection": {
+    "message": "Reset Connection",
+    "description": "Button to reset connection"
+  },
+  "resettingConnection": {
+    "message": "Resetting connection...",
+    "description": "Message shown while resetting connection"
+  },
+  "connectionReset": {
+    "message": "Connection reset. Please reconnect.",
+    "description": "Message shown after connection reset"
+  },
+  "errorPleaseTryAgain": {
+    "message": "An error occurred. Please try again.",
+    "description": "Generic error message"
+  },
+  "errorConnectionFailed": {
+    "message": "Connection failed. Please check your settings.",
+    "description": "Connection failed error message"
+  },
+  "errorInvalidUrl": {
+    "message": "Please enter a valid URL (including http:// or https://)",
+    "description": "Invalid URL error message"
+  },
+  "errorAuthFailed": {
+    "message": "Authentication failed. Please check your username and password.",
+    "description": "Authentication failed error message"
+  },
+  "errorNotFound": {
+    "message": "API endpoint not found. Please check your URL.",
+    "description": "Not found error message"
+  },
+  "errorTogglingProtection": {
+    "message": "Failed to toggle protection. Please try again.",
+    "description": "Error message for toggling protection"
+  },
+  "disablingProtection": {
+    "message": "Disabling protection...",
+    "description": "Message shown while disabling protection"
+  },
+  "enablingProtection": {
+    "message": "Enabling protection...",
+    "description": "Message shown while enabling protection"
+  },
+  "protectionEnabled": {
+    "message": "Protection enabled successfully",
+    "description": "Message shown when protection is enabled"
+  },
+  "protectionDisabled": {
+    "message": "Protection disabled successfully",
+    "description": "Message shown when protection is disabled"
+  },
+  "protectionDisabledFor": {
+    "message": "Protection disabled for $MINUTES$ minutes",
+    "description": "Message shown when protection is disabled temporarily",
+    "placeholders": {
+      "MINUTES": {
+        "content": "$1",
+        "example": "5"
+      }
+    }
+  },
+  "timerExpired": {
+    "message": "Timer expired, re-enabling protection...",
+    "description": "Message shown when temporary disable timer expires"
+  },
+  "cancellingTimer": {
+    "message": "Cancelling temporary disable...",
+    "description": "Message shown while cancelling temporary disable"
+  }
+} 

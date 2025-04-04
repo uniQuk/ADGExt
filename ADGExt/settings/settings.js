@@ -2,6 +2,7 @@
  * AdGuard Home Manager Settings
  * Handles multiple instance management and user preferences
  */
+import { localizeHtml, getMessage, getFormattedMessage, createLocalizedElement } from '../src/utils/i18n.js';
 
 // DOM Elements
 const backButton = document.getElementById('btnBack');
@@ -29,10 +30,40 @@ let editMode = false;
 
 // Initialize settings page
 document.addEventListener('DOMContentLoaded', () => {
+    // Localize HTML elements
+    localizeHtml();
+    
+    // Set up refresh interval options with localized text
+    setupRefreshIntervalOptions();
+    
+    // Load data and set up event listeners
     loadInstances();
     loadPreferences();
     setupEventListeners();
 });
+
+/**
+ * Set up localized refresh interval options
+ */
+function setupRefreshIntervalOptions() {
+    // Get existing options
+    const options = Array.from(refreshIntervalSelect.options);
+    
+    // Skip the first option (Disabled) as it's already localized via data-i18n
+    for (let i = 1; i < options.length; i++) {
+        const option = options[i];
+        const value = parseInt(option.value);
+        
+        if (value === 60) {
+            option.textContent = `1 ${getMessage('minute')}`;
+        } else if (value < 60) {
+            option.textContent = `${value} ${getMessage('seconds')}`;
+        } else {
+            const minutes = value / 60;
+            option.textContent = `${minutes} ${getMessage('minutes')}`;
+        }
+    }
+}
 
 /**
  * Set up all event listeners for the settings page
@@ -84,7 +115,10 @@ function renderInstanceList() {
     instanceList.innerHTML = '';
     
     if (instances.length === 0) {
-        instanceList.innerHTML = '<div class="no-instances">No instances configured yet. Add your first AdGuard Home instance.</div>';
+        const noInstancesElement = createLocalizedElement('div', 'noInstances', {
+            className: 'no-instances'
+        });
+        instanceList.appendChild(noInstancesElement);
         return;
     }
     
@@ -140,6 +174,11 @@ function renderInstanceList() {
 function setActiveInstance(instanceId) {
     currentInstanceId = instanceId;
     chrome.storage.sync.set({ activeInstance: instanceId }, () => {
+        // Also message the background script to switch active instance
+        chrome.runtime.sendMessage({ 
+            action: 'switchActiveInstance',
+            instanceId: instanceId
+        });
         renderInstanceList();
     });
 }
@@ -149,7 +188,7 @@ function setActiveInstance(instanceId) {
  */
 function openAddInstanceModal() {
     editMode = false;
-    modalTitle.textContent = 'Add Instance';
+    modalTitle.textContent = getMessage('addInstance');
     instanceIdInput.value = '';
     instanceForm.reset();
     instanceModal.style.display = 'block';
@@ -164,7 +203,7 @@ function openEditInstanceModal(instanceId) {
     const instance = instances.find(inst => inst.id === instanceId);
     if (!instance) return;
     
-    modalTitle.textContent = 'Edit Instance';
+    modalTitle.textContent = getMessage('editInstance');
     instanceIdInput.value = instance.id;
     instanceNameInput.value = instance.name;
     instanceUrlInput.value = instance.url;
@@ -238,7 +277,7 @@ function saveInstance(e) {
  * @param {string} instanceId - ID of the instance to delete
  */
 function deleteInstance(instanceId) {
-    if (confirm('Are you sure you want to delete this instance?')) {
+    if (confirm(getMessage('deleteConfirm'))) {
         instances = instances.filter(instance => instance.id !== instanceId);
         
         // If the active instance was deleted, set the first available as active

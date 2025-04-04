@@ -1,4 +1,9 @@
+import { localizeHtml, getMessage, getFormattedMessage, formatDate, formatNumber } from '../src/utils/i18n.js';
+
 document.addEventListener('DOMContentLoaded', function() {
+  // Localize HTML elements
+  localizeHtml();
+  
   // Get references to DOM elements
   const connectForm = document.getElementById('connect-form');
   const connectionForm = document.getElementById('connection-form');
@@ -12,6 +17,9 @@ document.addEventListener('DOMContentLoaded', function() {
   const customMinutesInput = document.getElementById('custom-minutes');
   const cancelTimerBtn = document.getElementById('cancel-timer-btn');
   const settingsButton = document.getElementById('settings-button');
+  
+  // Localize timer options
+  localizeTimerOptions();
   
   // Add event listener for settings button
   settingsButton.addEventListener('click', function() {
@@ -42,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function() {
     applyCustomTimerBtn.addEventListener('click', function() {
       const minutes = parseInt(customMinutesInput.value, 10);
       if (isNaN(minutes) || minutes < 1) {
-        showErrorNotification('Please enter a valid number of minutes');
+        showErrorNotification(getMessage('invalidMinutes'));
         return;
       }
       disableTemporarily(minutes);
@@ -70,14 +78,14 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Validate URL format
     if (!isValidUrl(url)) {
-      showError('Please enter a valid URL (including http:// or https://)');
+      showError(getMessage('invalidUrl'));
       return;
     }
     
     // Show loading state
     const connectButton = document.getElementById('connect-button');
     const originalButtonText = connectButton.textContent;
-    connectButton.textContent = 'Connecting...';
+    connectButton.textContent = getMessage('connecting');
     connectButton.disabled = true;
     
     // Save credentials securely using the background script
@@ -91,7 +99,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Failed to save credentials
         connectButton.textContent = originalButtonText;
         connectButton.disabled = false;
-        showError('Failed to save credentials securely.');
+        showError(getMessage('failedToSaveCredentials'));
         return;
       }
       
@@ -114,14 +122,14 @@ document.addEventListener('DOMContentLoaded', function() {
               fetchAndDisplayStats();
             } else {
               // Status refresh failed
-              handleConnectionError(statusResponse?.error || { message: 'Failed to get status' });
+              handleConnectionError(statusResponse?.error || { message: getMessage('failedToRefreshStatus') });
             }
           });
         } else {
           // Connection test failed
           connectButton.textContent = originalButtonText;
           connectButton.disabled = false;
-          handleConnectionError(response?.error || { message: 'Connection test failed' });
+          handleConnectionError(response?.error || { message: getMessage('connectionTestFailed') });
         }
       });
     });
@@ -156,7 +164,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 
                 // Show error if there is one
                 if (response && response.error) {
-                  showErrorNotification(response.error.message || 'Failed to refresh status');
+                  showErrorNotification(response.error.message || getMessage('failedToRefreshStatus'));
                 }
               }
             });
@@ -186,7 +194,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     const resetBtn = document.createElement('button');
     resetBtn.id = 'reset-connection-btn';
-    resetBtn.textContent = 'Reset Connection';
+    resetBtn.textContent = getMessage('resetConnection');
     resetBtn.className = 'reset-btn';
     
     // Add event listener
@@ -203,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to reset connection state
   function resetConnection() {
-    showErrorNotification('Resetting connection...');
+    showErrorNotification(getMessage('resettingConnection'));
     
     // Force reset API client
     chrome.runtime.sendMessage({ action: 'resetApiClient' }, function() {
@@ -216,7 +224,7 @@ document.addEventListener('DOMContentLoaded', function() {
         isConnected: false,
         protectionEnabled: false
       }, function() {
-        showErrorNotification('Connection reset. Please reconnect.');
+        showErrorNotification(getMessage('connectionResetPleaseReconnect'));
       });
     });
   }
@@ -235,14 +243,14 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to get a user-friendly error message
   function getErrorMessage(error) {
-    if (!error) return 'Unknown error occurred';
+    if (!error) return getMessage('unknownErrorOccurred');
     
     if (typeof error === 'string') return error;
     
     // Return the user-friendly message if available
     if (error.message) return error.message;
     
-    return 'Failed to connect to AdGuard Home';
+    return getMessage('failedToConnectToAdGuardHome');
   }
   
   // Function to show an error message
@@ -307,48 +315,48 @@ document.addEventListener('DOMContentLoaded', function() {
     switch (error.code) {
       case 'NETWORK_ERROR':
         tipContent = `
-          <h3>Troubleshooting Tips:</h3>
+          <h3>${getMessage('troubleshootingTips')}:</h3>
           <ul>
-            <li>Make sure AdGuard Home is running</li>
-            <li>Check that the URL is correct</li>
-            <li>Ensure your network connection is stable</li>
-            <li>If using a hostname, ensure DNS resolution is working</li>
-            <li>Check if a firewall might be blocking the connection</li>
-            <li>Try adding or removing "/control" from the URL</li>
+            <li>${getMessage('makeSureAdGuardHomeIsRunning')}</li>
+            <li>${getMessage('checkThatTheURLIsCorrect')}</li>
+            <li>${getMessage('ensureYourNetworkConnectionIsStable')}</li>
+            <li>${getMessage('ifUsingAHostnameEnsureDNSResolutionIsWorking')}</li>
+            <li>${getMessage('checkIfAFirewallMightBeBlockingTheConnection')}</li>
+            <li>${getMessage('tryAddingOrRemovingControlFromTheURL')}</li>
           </ul>
         `;
         break;
       case 'AUTH_ERROR':
         tipContent = `
-          <h3>Authentication Failed:</h3>
+          <h3>${getMessage('authenticationFailed')}:</h3>
           <ul>
-            <li>Double-check your username and password</li>
-            <li>Ensure you're using admin credentials</li>
-            <li>Try resetting your AdGuard Home password if you're unsure</li>
+            <li>${getMessage('doubleCheckYourUsernameAndPassword')}</li>
+            <li>${getMessage('ensureYoureUsingAdminCredentials')}</li>
+            <li>${getMessage('tryResettingYourAdGuardHomePasswordIfYoureUnsure')}</li>
           </ul>
         `;
         break;
       case 'NOT_FOUND':
         tipContent = `
-          <h3>API Endpoint Not Found:</h3>
+          <h3>${getMessage('apiEndpointNotFound')}:</h3>
           <ul>
-            <li>Make sure the URL points to an AdGuard Home instance</li>
-            <li>Try adding or removing "/control" from the URL</li>
-            <li>Verify your AdGuard Home version is compatible</li>
-            <li>Check if AdGuard Home API is enabled in settings</li>
+            <li>${getMessage('makeSureTheURLPointsToAnAdGuardHomeInstance')}</li>
+            <li>${getMessage('tryAddingOrRemovingControlFromTheURL')}</li>
+            <li>${getMessage('verifyYourAdGuardHomeVersionIsCompatible')}</li>
+            <li>${getMessage('checkIfAdGuardHomeAPIisEnabledInSettings')}</li>
           </ul>
         `;
         break;
       default:
         tipContent = `
-          <h3>Troubleshooting Tips:</h3>
+          <h3>${getMessage('troubleshootingTips')}:</h3>
           <ul>
-            <li>Verify AdGuard Home is running correctly</li>
-            <li>Try using the server IP address instead of hostname</li>
-            <li>Check your network connection</li>
-            <li>Try refreshing the page</li>
-            <li>Restart AdGuard Home if possible</li>
-            <li>Make sure you're using the correct port (usually 80 or 3000)</li>
+            <li>${getMessage('verifyAdGuardHomeIsRunningCorrectly')}</li>
+            <li>${getMessage('tryUsingTheServerIPAddressInsteadOfHostname')}</li>
+            <li>${getMessage('checkYourNetworkConnection')}</li>
+            <li>${getMessage('tryRefreshingThePage')}</li>
+            <li>${getMessage('restartAdGuardHomeIfPossible')}</li>
+            <li>${getMessage('makeSureYoureUsingTheCorrectPortUsually80Or3000')}</li>
           </ul>
         `;
     }
@@ -356,9 +364,9 @@ document.addEventListener('DOMContentLoaded', function() {
     tipBox.innerHTML = `
       ${tipContent}
       <div class="tip-actions">
-        <button class="tip-close-btn">Close</button>
-        <button class="try-again-btn">Try Again</button>
-        <button class="reset-connection-tip-btn">Reset Connection</button>
+        <button class="tip-close-btn">${getMessage('close')}</button>
+        <button class="try-again-btn">${getMessage('tryAgain')}</button>
+        <button class="reset-connection-tip-btn">${getMessage('resetConnection')}</button>
       </div>
     `;
     
@@ -396,8 +404,8 @@ document.addEventListener('DOMContentLoaded', function() {
     const timestamp = new Date(error.timestamp).toLocaleString();
     
     errorNotice.innerHTML = `
-      <p>Previous connection failed: ${error.message}</p>
-      <p class="error-timestamp">Last attempt: ${timestamp}</p>
+      <p>${getMessage('previousConnectionFailed')}: ${error.message}</p>
+      <p class="error-timestamp">${getMessage('lastAttempt')}: ${timestamp}</p>
     `;
     
     // Insert after the form
@@ -420,7 +428,7 @@ document.addEventListener('DOMContentLoaded', function() {
     hideTimerModal();
     
     // Show loading notification
-    showErrorNotification(`Disabling protection for ${minutes} minutes...`);
+    showErrorNotification(getMessage('disablingProtectionForMinutes', { minutes: minutes }));
     
     // Send message to background script
     chrome.runtime.sendMessage({
@@ -429,7 +437,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, function(response) {
       if (response && response.success) {
         // Show success notification
-        showSuccessNotification(`Protection disabled for ${minutes} minutes`);
+        showSuccessNotification(getMessage('protectionDisabledForMinutes', { minutes: minutes }));
         
         // Update protection status in UI (disabled)
         updateProtectionStatus(false);
@@ -441,7 +449,7 @@ document.addEventListener('DOMContentLoaded', function() {
         protectionToggle.checked = false;
       } else {
         // Show error notification
-        showErrorNotification('Failed to disable protection temporarily');
+        showErrorNotification(getMessage('failedToDisableProtectionTemporarily'));
         
         // Show error details if available
         if (response && response.error) {
@@ -517,7 +525,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to handle timer expiration
   function timerExpired() {
     // Show loading notification
-    showErrorNotification('Timer expired, re-enabling protection...');
+    showErrorNotification(getMessage('timerExpiredReEnablingProtection'));
     
     // Re-enable protection
     chrome.runtime.sendMessage({
@@ -526,7 +534,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, function(response) {
       if (response && response.success) {
         // Show success notification
-        showSuccessNotification('Protection re-enabled successfully');
+        showSuccessNotification(getMessage('protectionReEnabledSuccessfully'));
         
         // Update protection status in UI
         updateProtectionStatus(true);
@@ -538,7 +546,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetTimerUI();
       } else {
         // Show error notification
-        showErrorNotification('Failed to re-enable protection');
+        showErrorNotification(getMessage('failedToReEnableProtection'));
         
         // Show error details if available
         if (response && response.error) {
@@ -569,7 +577,7 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to cancel temporary disable
   function cancelTemporaryDisable() {
     // Show loading notification
-    showErrorNotification('Cancelling temporary disable...');
+    showErrorNotification(getMessage('cancellingTemporaryDisable'));
     
     // Re-enable protection
     chrome.runtime.sendMessage({
@@ -578,7 +586,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, function(response) {
       if (response && response.success) {
         // Show success notification
-        showSuccessNotification('Protection re-enabled');
+        showSuccessNotification(getMessage('protectionReEnabled'));
         
         // Update protection status in UI
         updateProtectionStatus(true);
@@ -590,7 +598,7 @@ document.addEventListener('DOMContentLoaded', function() {
         resetTimerUI();
       } else {
         // Show error notification
-        showErrorNotification('Failed to re-enable protection');
+        showErrorNotification(getMessage('failedToReEnableProtection'));
         
         // Show error details if available
         if (response && response.error) {
@@ -627,7 +635,7 @@ document.addEventListener('DOMContentLoaded', function() {
     protectionToggle.disabled = true;
     
     // Show loading notification
-    showErrorNotification(`${isEnabled ? 'Enabling' : 'Disabling'} protection...`);
+    showErrorNotification(getMessage('disablingProtection', { isEnabled: isEnabled ? getMessage('enabled') : getMessage('disabled') }));
     
     // Send message to background script
     chrome.runtime.sendMessage({
@@ -639,7 +647,7 @@ document.addEventListener('DOMContentLoaded', function() {
       
       if (response && response.success) {
         // Show success notification
-        showSuccessNotification(`Protection ${isEnabled ? 'enabled' : 'disabled'} successfully`);
+        showSuccessNotification(getMessage('protection', { isEnabled: isEnabled ? getMessage('enabled') : getMessage('disabled') }));
         
         // Update protection status in UI
         updateProtectionStatus(isEnabled);
@@ -648,7 +656,7 @@ document.addEventListener('DOMContentLoaded', function() {
         updateTemporaryDisableButton(isEnabled);
       } else {
         // Show error notification
-        showErrorNotification(`Failed to ${isEnabled ? 'enable' : 'disable'} protection`);
+        showErrorNotification(getMessage('failedTo', { isEnabled: isEnabled ? getMessage('enable') : getMessage('disable') }));
         
         // Revert toggle to previous state
         protectionToggle.checked = !isEnabled;
@@ -750,10 +758,10 @@ document.addEventListener('DOMContentLoaded', function() {
     
     statusArea.innerHTML = `
       <div class="status-box">
-        <h2>Status: <span class="status-indicator ${isConnected ? 'connected' : 'disconnected'}">${isConnected ? 'Connected' : 'Disconnected'}</span></h2>
-        <p>Protection: <span class="status-indicator ${isProtectionEnabled ? 'enabled' : 'disabled'}">${isProtectionEnabled ? 'Enabled' : 'Disabled'}</span></p>
-        ${lastUpdated ? `<p class="stats-updated">Last updated: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
-        <button id="refresh-button">Refresh</button>
+        <h2>Status: <span class="status-indicator ${isConnected ? 'connected' : 'disconnected'}">${isConnected ? getMessage('connected') : getMessage('disconnected')}</span></h2>
+        <p>Protection: <span class="status-indicator ${isProtectionEnabled ? 'enabled' : 'disabled'}">${isProtectionEnabled ? getMessage('enabled') : getMessage('disabled')}</span></p>
+        ${lastUpdated ? `<p class="stats-updated">${getMessage('lastUpdated')}: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
+        <button id="refresh-button">${getMessage('refresh')}</button>
       </div>
     `;
     
@@ -785,26 +793,26 @@ document.addEventListener('DOMContentLoaded', function() {
     
     statsArea.innerHTML = `
       <div class="stats-box">
-        <h2>DNS Query Statistics</h2>
+        <h2>${getMessage('dnsQueryStatistics')}</h2>
         <div class="stats-grid">
           <div class="stat-item">
             <div class="stat-value">${formatNumber(queries)}</div>
-            <div class="stat-label">DNS Queries</div>
+            <div class="stat-label">${getMessage('dnsQueries')}</div>
           </div>
           <div class="stat-item">
             <div class="stat-value">${formatNumber(blocked)}</div>
-            <div class="stat-label">Blocked Queries</div>
+            <div class="stat-label">${getMessage('blockedQueries')}</div>
           </div>
           <div class="stat-item">
             <div class="stat-value">${blockingPercentage}%</div>
-            <div class="stat-label">Blocking Rate</div>
+            <div class="stat-label">${getMessage('blockingRate')}</div>
           </div>
           <div class="stat-item">
             <div class="stat-value">${avgTime ? avgTime.toFixed(2) + 'ms' : 'N/A'}</div>
-            <div class="stat-label">Avg Processing</div>
+            <div class="stat-label">${getMessage('avgProcessing')}</div>
           </div>
         </div>
-        ${lastUpdated ? `<p class="stats-updated">Last updated: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
+        ${lastUpdated ? `<p class="stats-updated">${getMessage('lastUpdated')}: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
       </div>
     `;
   }
@@ -835,7 +843,7 @@ document.addEventListener('DOMContentLoaded', function() {
     const refreshButton = document.getElementById('refresh-button');
     if (refreshButton) {
       const originalButtonText = refreshButton.textContent;
-      refreshButton.textContent = 'Refreshing...';
+      refreshButton.textContent = getMessage('refreshing');
       refreshButton.disabled = true;
       
       // Refresh status and stats
@@ -850,7 +858,7 @@ document.addEventListener('DOMContentLoaded', function() {
           fetchAndDisplayStats();
         } else {
           // Failed to refresh
-          showErrorNotification('Failed to refresh status');
+          showErrorNotification(getMessage('failedToRefreshStatus'));
           
           // Show error details if available
           if (response && response.error) {
@@ -877,7 +885,7 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Show error if there is one
         if (response && response.error) {
-          showErrorNotification(response.error.message || 'Failed to load statistics');
+          showErrorNotification(response.error.message || getMessage('failedToLoadStatistics'));
         }
       }
     });
@@ -916,5 +924,25 @@ document.addEventListener('DOMContentLoaded', function() {
     } catch (e) {
       return false;
     }
+  }
+  
+  /**
+   * Localize timer options with appropriate units
+   */
+  function localizeTimerOptions() {
+    timerOptions.forEach(option => {
+      const minutes = parseInt(option.getAttribute('data-minutes'), 10);
+      if (minutes === 60) {
+        option.textContent = `1 ${getMessage('hour')}`;
+      } else if (minutes < 60) {
+        option.textContent = `${minutes} ${getMessage('minutes')}`;
+      } else {
+        const hours = minutes / 60;
+        option.textContent = `${hours} ${getMessage('hours')}`;
+      }
+    });
+    
+    // Also localize the custom minutes input placeholder
+    customMinutesInput.placeholder = getMessage('minutes');
   }
 }); 

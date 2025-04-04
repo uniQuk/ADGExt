@@ -1,0 +1,10 @@
+{
+  "extName": {
+    "message": "AdGuard Home Manager",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Manage your local AdGuard Home installations directly from your browser",
+    "description": "Extension description"
+  }
+} 

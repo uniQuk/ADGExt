@@ -1,0 +1,154 @@
+{
+  "extName": {
+    "message": "Gestionnaire AdGuard Home",
+    "description": "Extension name"
+  },
+  "extDescription": {
+    "message": "Gérez vos installations AdGuard Home directement depuis votre navigateur",
+    "description": "Extension description"
+  },
+  "settingsTitle": {
+    "message": "Paramètres",
+    "description": "Title for the settings page"
+  },
+  "back": {
+    "message": "Retour",
+    "description": "Back button text"
+  },
+  "manageInstances": {
+    "message": "Gérer les Instances",
+    "description": "Title for the instances management section"
+  },
+  "addNewInstance": {
+    "message": "Ajouter une Instance",
+    "description": "Button to add a new instance"
+  },
+  "preferences": {
+    "message": "Préférences",
+    "description": "Title for the preferences section"
+  },
+  "theme": {
+    "message": "Thème",
+    "description": "Label for theme selector"
+  },
+  "themeAuto": {
+    "message": "Auto (Système)",
+    "description": "Auto theme option"
+  },
+  "themeLight": {
+    "message": "Clair",
+    "description": "Light theme option"
+  },
+  "themeDark": {
+    "message": "Sombre",
+    "description": "Dark theme option"
+  },
+  "refreshInterval": {
+    "message": "Intervalle de rafraîchissement",
+    "description": "Label for refresh interval selector"
+  },
+  "refreshDisabled": {
+    "message": "Désactivé",
+    "description": "Disabled refresh option"
+  },
+  "seconds": {
+    "message": "secondes",
+    "description": "Seconds unit"
+  },
+  "minute": {
+    "message": "minute",
+    "description": "Minute unit (singular)"
+  },
+  "minutes": {
+    "message": "minutes",
+    "description": "Minutes unit (plural)"
+  },
+  "showNotifications": {
+    "message": "Afficher les notifications de changement d'état",
+    "description": "Label for notifications checkbox"
+  },
+  "addInstance": {
+    "message": "Ajouter une Instance",
+    "description": "Modal title for adding an instance"
+  },
+  "editInstance": {
+    "message": "Modifier l'Instance",
+    "description": "Modal title for editing an instance"
+  },
+  "instanceName": {
+    "message": "Nom",
+    "description": "Label for instance name input"
+  },
+  "instanceUrl": {
+    "message": "URL AdGuard Home",
+    "description": "Label for instance URL input"
+  },
+  "username": {
+    "message": "Nom d'utilisateur",
+    "description": "Label for username input"
+  },
+  "password": {
+    "message": "Mot de passe",
+    "description": "Label for password input"
+  },
+  "save": {
+    "message": "Enregistrer",
+    "description": "Save button text"
+  },
+  "cancel": {
+    "message": "Annuler",
+    "description": "Cancel button text"
+  },
+  "deleteConfirm": {
+    "message": "Êtes-vous sûr de vouloir supprimer cette instance ?",
+    "description": "Confirmation message for deleting an instance"
+  },
+  "noInstances": {
+    "message": "Aucune instance configurée. Ajoutez votre première instance AdGuard Home.",
+    "description": "Message shown when no instances are configured"
+  },
+  "connectToAdGuard": {
+    "message": "Se connecter à AdGuard Home",
+    "description": "Title for the connection form"
+  },
+  "serverUrl": {
+    "message": "URL du serveur :",
+    "description": "Label for server URL input"
+  },
+  "connect": {
+    "message": "Connecter",
+    "description": "Connect button text"
+  },
+  "connecting": {
+    "message": "Connexion en cours...",
+    "description": "Text shown while connecting"
+  },
+  "status": {
+    "message": "Statut :",
+    "description": "Label for status display"
+  },
+  "connected": {
+    "message": "Connecté",
+    "description": "Connected status text"
+  },
+  "disconnected": {
+    "message": "Déconnecté",
+    "description": "Disconnected status text"
+  },
+  "protection": {
+    "message": "Protection",
+    "description": "Label for protection status"
+  },
+  "enabled": {
+    "message": "Activée",
+    "description": "Enabled status text"
+  },
+  "disabled": {
+    "message": "Désactivée",
+    "description": "Disabled status text"
+  },
+  "disableTemporarily": {
+    "message": "Désactiver Temporairement",
+    "description": "Button to disable protection temporarily"
+  }
+} 
