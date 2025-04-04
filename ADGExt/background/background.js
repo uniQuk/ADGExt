@@ -3,8 +3,10 @@
 import { AdGuardHomeAPI } from './api.js';
 import { encrypt, decrypt } from './crypto.js';
 
-let adguardApi = null;
+// Map of instance IDs to API clients
+let apiInstances = {};
 let statusCheckInterval = null;
+let activeInstanceId = null;
 
 // Status check interval in milliseconds (default: 60 seconds)
 const STATUS_CHECK_INTERVAL = 60000;
@@ -33,30 +35,85 @@ chrome.runtime.onInstalled.addListener(() => {
   console.log('AdGuard Home Manager extension installed');
   
   // Initialize storage with default values if needed
-  chrome.storage.local.get(['adguardUrl'], function(result) {
-    if (!result.adguardUrl) {
-      chrome.storage.local.set({
-        adguardUrl: '',
-        adguardUsername: '',
-        isConnected: false,
-        protectionEnabled: false,
-        stats: {
-          num_dns_queries: 0,
-          num_blocked_filtering: 0
-        },
-        lastUpdated: null,
-        connectionErrors: [],
-        autoRefresh: true, // Enable auto refresh by default
-        refreshInterval: STATUS_CHECK_INTERVAL // Default refresh interval
+  chrome.storage.sync.get(['adguardInstances', 'activeInstance'], function(result) {
+    if (!result.adguardInstances) {
+      chrome.storage.sync.set({
+        adguardInstances: [],
+        activeInstance: null
       });
     }
     
-    // Start periodic status checks if we have connection details
-    if (result.adguardUrl) {
+    // Check if we have legacy data to migrate
+    migrateLegacyDataIfNeeded();
+    
+    // Start periodic status checks if we have an active instance
+    if (result.activeInstance) {
+      activeInstanceId = result.activeInstance;
       startPeriodicStatusChecks();
     }
   });
+  
+  // Initialize local storage for instance-specific data
+  chrome.storage.local.set({
+    instanceData: {},
+    connectionErrors: [],
+    autoRefresh: true, // Enable auto refresh by default
+    refreshInterval: STATUS_CHECK_INTERVAL // Default refresh interval
+  });
 });
+
+// Function to migrate legacy data to the new multi-instance structure
+async function migrateLegacyDataIfNeeded() {
+  const legacyData = await chrome.storage.local.get([
+    'adguardUrl', 
+    'adguardUsername', 
+    SECURE_KEYS.PASSWORD
+  ]);
+  
+  if (legacyData.adguardUrl && legacyData.adguardUsername && legacyData[SECURE_KEYS.PASSWORD]) {
+    console.log('Migrating legacy data to multi-instance structure');
+    
+    try {
+      // Decrypt the password
+      const password = await decrypt(legacyData[SECURE_KEYS.PASSWORD]);
+      
+      // Get existing instances
+      const data = await chrome.storage.sync.get(['adguardInstances']);
+      const instances = data.adguardInstances || [];
+      
+      // Create new instance from legacy data
+      const newInstance = {
+        id: crypto.randomUUID(),
+        name: 'My AdGuard Home',
+        url: legacyData.adguardUrl,
+        username: legacyData.adguardUsername,
+        password: password
+      };
+      
+      // Add the new instance and set it as active
+      instances.push(newInstance);
+      
+      // Save the updated instances and set active instance
+      await chrome.storage.sync.set({
+        adguardInstances: instances,
+        activeInstance: newInstance.id
+      });
+      
+      activeInstanceId = newInstance.id;
+      
+      // Clear legacy data
+      await chrome.storage.local.remove([
+        'adguardUrl', 
+        'adguardUsername', 
+        SECURE_KEYS.PASSWORD
+      ]);
+      
+      console.log('Legacy data migration complete');
+    } catch (error) {
+      console.error('Failed to migrate legacy data:', error);
+    }
+  }
+}
 
 // Function to start periodic status checks
 function startPeriodicStatusChecks() {
@@ -80,14 +137,13 @@ function startPeriodicStatusChecks() {
     statusCheckInterval = setInterval(async () => {
       console.log('Running periodic status check');
       
-      // Only run if we're connected
-      const connectionStatus = await chrome.storage.local.get(['isConnected']);
-      if (!connectionStatus.isConnected) {
-        console.log('Not connected, skipping periodic check');
+      // Check if we have an active instance
+      if (!activeInstanceId) {
+        console.log('No active instance, skipping periodic check');
         return;
       }
       
-      // Refresh status and stats
+      // Refresh status and stats for active instance
       try {
         await refreshStatus();
         await refreshStats();
@@ -113,7 +169,7 @@ async function saveCredentials(url, username, password) {
   try {
     console.log('Saving credentials for:', url);
     // Reset API client when credentials change
-    adguardApi = null;
+    apiInstances = {};
     
     // Encrypt the password
     const encryptedPassword = await encrypt(password);
@@ -162,26 +218,59 @@ async function getCredentials() {
   }
 }
 
-// Function to initialize the API client with stored credentials
+// Function to get the active instance data
+async function getActiveInstance() {
+  try {
+    // Get active instance ID
+    const result = await chrome.storage.sync.get(['activeInstance', 'adguardInstances']);
+    const instanceId = result.activeInstance;
+    
+    if (!instanceId) {
+      console.log('No active instance set');
+      return null;
+    }
+    
+    // Find instance in the instances array
+    const instances = result.adguardInstances || [];
+    const instance = instances.find(inst => inst.id === instanceId);
+    
+    if (!instance) {
+      console.log('Active instance not found in instances array');
+      return null;
+    }
+    
+    return instance;
+  } catch (error) {
+    console.error('Failed to get active instance:', error);
+    return null;
+  }
+}
+
+// Function to initialize the API client for the active instance
 async function initializeApiClient(forceNew = false) {
-  if (adguardApi && !forceNew) {
-    console.log('Using existing API client');
-    return adguardApi;
+  // Get the active instance ID
+  const activeId = activeInstanceId;
+  
+  // If we already have an API client for this instance and not forcing new, return it
+  if (!forceNew && apiInstances[activeId]) {
+    console.log('Using existing API client for instance:', activeId);
+    return apiInstances[activeId];
   }
   
-  console.log('Initializing API client...');
-  const credentials = await getCredentials();
-  if (credentials && credentials.url && credentials.username && credentials.password) {
-    console.log('Creating new API client for:', credentials.url);
-    adguardApi = new AdGuardHomeAPI(credentials.url, credentials.username, credentials.password);
+  console.log('Initializing API client for instance:', activeId);
+  const instance = await getActiveInstance();
+  
+  if (instance && instance.url && instance.username && instance.password) {
+    console.log('Creating new API client for:', instance.url);
+    apiInstances[activeId] = new AdGuardHomeAPI(instance.url, instance.username, instance.password);
     
     // Start periodic checks when API client is initialized
     startPeriodicStatusChecks();
     
-    return adguardApi;
+    return apiInstances[activeId];
   }
   
-  console.log('No credentials available, API client not initialized');
+  console.log('No active instance found, API client not initialized');
   // Stop periodic checks if no credentials
   stopPeriodicStatusChecks();
   return null;
@@ -231,7 +320,7 @@ async function retryOperation(operation, maxRetries = RETRY_CONFIG.MAX_RETRIES) 
       // Reset API client on first failure
       if (attempt === 0) {
         console.log('Resetting API client after failure');
-        adguardApi = null;
+        apiInstances = {};
         await initializeApiClient(true);
       }
       
@@ -303,7 +392,7 @@ async function refreshStatus() {
     console.error('Failed to refresh status:', error);
     
     // Reset API client on failure
-    adguardApi = null;
+    apiInstances = {};
     
     // Update connection status and log the error
     chrome.storage.local.set({
@@ -352,73 +441,114 @@ async function refreshStats() {
   }
 }
 
-// Listen for messages from the popup
+// Listen for messages from the extension popup or settings page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Received message:', message);
+  console.log('Received message:', message.action);
   
+  // Handle various actions
   if (message.action === 'saveCredentials') {
     saveCredentials(message.url, message.username, message.password)
       .then(success => {
         sendResponse({ success });
-        // Start periodic checks if credentials were saved successfully
-        if (success) {
-          startPeriodicStatusChecks();
-        }
+      })
+      .catch(error => {
+        console.error('Error saving credentials:', error);
+        sendResponse({ success: false, error });
       });
-    return true;
+    return true; // Indicates async response
   }
   
   if (message.action === 'testConnection') {
     testConnection()
       .then(result => {
         sendResponse(result);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error });
       });
     return true;
   }
   
-  if (message.action === 'getConnectionStatus') {
-    // Get the current connection status from storage
-    chrome.storage.local.get(['isConnected', 'protectionEnabled', 'lastUpdated', 'connectionErrors'], (result) => {
-      sendResponse(result);
-    });
+  if (message.action === 'getActiveInstanceId') {
+    sendResponse({ instanceId: activeInstanceId });
     return true;
   }
   
-  if (message.action === 'getConnectionErrors') {
-    // Get the connection errors from storage
-    chrome.storage.local.get(['connectionErrors'], (result) => {
-      sendResponse({ errors: result.connectionErrors || [] });
-    });
+  if (message.action === 'switchActiveInstance') {
+    switchActiveInstance(message.instanceId)
+      .then(success => {
+        sendResponse({ success });
+      })
+      .catch(error => {
+        console.error('Error switching instance:', error);
+        sendResponse({ success: false, error });
+      });
     return true;
   }
   
   if (message.action === 'refreshStatus') {
-    // Refresh the status and return result
-    refreshStatus().then(result => {
-      sendResponse(result);
-    });
-    return true;
-  }
-  
-  if (message.action === 'getStats') {
-    // Get the current stats from storage
-    chrome.storage.local.get(['stats', 'lastStatsUpdated'], (result) => {
-      sendResponse(result);
-    });
+    refreshStatus()
+      .then(result => {
+        sendResponse(result);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error });
+      });
     return true;
   }
   
   if (message.action === 'refreshStats') {
-    // Refresh the stats and return result
-    refreshStats().then(result => {
-      sendResponse(result);
+    refreshStats()
+      .then(result => {
+        sendResponse(result);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error });
+      });
+    return true;
+  }
+  
+  if (message.action === 'toggleProtection') {
+    toggleProtection(message.enabled)
+      .then(result => {
+        sendResponse(result);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error });
+      });
+    return true;
+  }
+  
+  if (message.action === 'disableTemporarily') {
+    disableTemporarily(message.minutes)
+      .then(result => {
+        sendResponse(result);
+      })
+      .catch(error => {
+        sendResponse({ success: false, error });
+      });
+    return true;
+  }
+  
+  if (message.action === 'resetConnection') {
+    // Clear storage and reset API client
+    chrome.storage.local.set({
+      connectionErrors: []
+    }, () => {
+      // Reset API client and try to initialize again
+      apiInstances = {};
+      initializeApiClient(true).then(() => {
+        sendResponse({ success: true });
+      }).catch(error => {
+        sendResponse({ success: false, error });
+      });
     });
     return true;
   }
   
   if (message.action === 'resetApiClient') {
     // Force reset the API client
-    adguardApi = null;
+    apiInstances = {};
     initializeApiClient(true).then(() => {
       sendResponse({ success: true });
     }).catch(error => {
@@ -427,52 +557,31 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
   }
   
-  if (message.action === 'toggleProtection') {
-    // Toggle the protection status
-    toggleProtection(message.enabled).then(result => {
-      sendResponse(result);
-    }).catch(error => {
-      sendResponse({ success: false, error });
-    });
-    return true;
-  }
-  
-  if (message.action === 'disableTemporarily') {
-    // Disable protection temporarily
-    disableTemporarily(message.minutes).then(result => {
-      sendResponse(result);
-    }).catch(error => {
-      sendResponse({ success: false, error });
-    });
-    return true;
-  }
-  
-  if (message.action === 'toggleAutoRefresh') {
-    // Toggle automatic refresh
-    chrome.storage.local.get(['autoRefresh'], function(result) {
-      const newValue = message.enabled === undefined ? !result.autoRefresh : message.enabled;
-      chrome.storage.local.set({ autoRefresh: newValue }, function() {
-        if (newValue) {
-          startPeriodicStatusChecks();
-        } else {
-          stopPeriodicStatusChecks();
-        }
-        sendResponse({ success: true, autoRefresh: newValue });
+  if (message.action === 'getConnectionStatus') {
+    getActiveInstance().then(instance => {
+      sendResponse({
+        isConnected: !!instance,
+        activeInstance: instance ? {
+          id: instance.id,
+          name: instance.name,
+          url: instance.url
+        } : null
       });
+    }).catch(error => {
+      sendResponse({ isConnected: false, error });
     });
     return true;
   }
   
-  if (message.action === 'setRefreshInterval') {
-    // Set refresh interval
-    const interval = message.interval || STATUS_CHECK_INTERVAL;
-    chrome.storage.local.set({ refreshInterval: interval }, function() {
-      // Restart periodic checks with new interval
-      startPeriodicStatusChecks();
-      sendResponse({ success: true, refreshInterval: interval });
+  if (message.action === 'getLastError') {
+    chrome.storage.local.get(['connectionErrors'], (result) => {
+      const errors = result.connectionErrors || [];
+      sendResponse({ error: errors.length > 0 ? errors[0] : null });
     });
     return true;
   }
+  
+  return false;
 });
 
 // Function to toggle AdGuard Home protection
@@ -526,5 +635,34 @@ async function disableTemporarily(minutes) {
   } catch (error) {
     console.error('Failed to disable temporarily:', error);
     return { success: false, error };
+  }
+}
+
+// Function to switch the active instance
+async function switchActiveInstance(instanceId) {
+  try {
+    // Get the instances array
+    const result = await chrome.storage.sync.get(['adguardInstances']);
+    const instances = result.adguardInstances || [];
+    
+    // Check if the instance exists
+    const instance = instances.find(inst => inst.id === instanceId);
+    if (!instance) {
+      console.error('Instance not found:', instanceId);
+      return false;
+    }
+    
+    // Update the active instance
+    await chrome.storage.sync.set({ activeInstance: instanceId });
+    activeInstanceId = instanceId;
+    
+    // Force a new API client initialization for the new active instance
+    await initializeApiClient(true);
+    
+    console.log('Switched active instance to:', instanceId);
+    return true;
+  } catch (error) {
+    console.error('Failed to switch active instance:', error);
+    return false;
   }
 } 

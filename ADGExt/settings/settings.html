@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AdGuard Home Manager Settings</title>
+    <link rel="stylesheet" href="settings.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Settings</h1>
+            <button id="btnBack" class="btn-back" title="Back to main view">←</button>
+        </header>
+
+        <section class="settings-section">
+            <h2>Manage Instances</h2>
+            <div class="instance-list" id="instanceList">
+                <!-- Instances will be populated here -->
+            </div>
+            <button id="btnAddInstance" class="btn-primary">Add New Instance</button>
+        </section>
+
+        <section class="settings-section">
+            <h2>Preferences</h2>
+            <div class="setting-item">
+                <label for="themeSelector">Theme</label>
+                <select id="themeSelector">
+                    <option value="auto">Auto (System)</option>
+                    <option value="light">Light</option>
+                    <option value="dark">Dark</option>
+                </select>
+            </div>
+            <div class="setting-item">
+                <label for="refreshInterval">Auto-refresh interval</label>
+                <select id="refreshInterval">
+                    <option value="0">Disabled</option>
+                    <option value="15">15 seconds</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60">1 minute</option>
+                    <option value="300">5 minutes</option>
+                </select>
+            </div>
+            <div class="setting-item checkbox-item">
+                <input type="checkbox" id="showNotifications">
+                <label for="showNotifications">Show notifications for status changes</label>
+            </div>
+        </section>
+
+        <div id="instanceModal" class="modal">
+            <div class="modal-content">
+                <span class="close">&times;</span>
+                <h2 id="modalTitle">Add Instance</h2>
+                <form id="instanceForm">
+                    <input type="hidden" id="instanceId">
+                    <div class="form-group">
+                        <label for="instanceName">Name</label>
+                        <input type="text" id="instanceName" placeholder="Home, Office, etc." required>
+                    </div>
+                    <div class="form-group">
+                        <label for="instanceUrl">AdGuard Home URL</label>
+                        <input type="url" id="instanceUrl" placeholder="http://localhost:3000" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="instanceUsername">Username</label>
+                        <input type="text" id="instanceUsername" required>
+                    </div>
+                    <div class="form-group">
+                        <label for="instancePassword">Password</label>
+                        <input type="password" id="instancePassword" required>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" class="btn-primary" id="btnSaveInstance">Save</button>
+                        <button type="button" class="btn-secondary" id="btnCancelInstance">Cancel</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    <script src="settings.js"></script>
+</body>
+</html> 

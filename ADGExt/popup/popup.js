@@ -11,6 +11,12 @@ document.addEventListener('DOMContentLoaded', function() {
   const applyCustomTimerBtn = document.getElementById('apply-custom-timer');
   const customMinutesInput = document.getElementById('custom-minutes');
   const cancelTimerBtn = document.getElementById('cancel-timer-btn');
+  const settingsButton = document.getElementById('settings-button');
+  
+  // Add event listener for settings button
+  settingsButton.addEventListener('click', function() {
+    window.location.href = '../settings/settings.html';
+  });
   
   // Check if we have saved connection settings and try to connect
   checkConnectionStatus();
