@@ -68,4 +68,296 @@ button:hover {
   color: #999;
   border-top: 1px solid #ddd;
   padding-top: 10px;
+}
+
+/* Status box styling */
+.status-box {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.status-box h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.status-indicator {
+  display: inline-block;
+  font-weight: bold;
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-left: 5px;
+}
+
+.status-indicator.connected {
+  background-color: #4caf50;
+  color: white;
+}
+
+.status-indicator.disconnected {
+  background-color: #f44336;
+  color: white;
+}
+
+.status-indicator.enabled {
+  background-color: #4caf50;
+  color: white;
+}
+
+.status-indicator.disabled {
+  background-color: #ff9800;
+  color: white;
+}
+
+.loading {
+  text-align: center;
+  font-style: italic;
+  color: #666;
+}
+
+.error {
+  color: #f44336;
+  font-weight: bold;
+  text-align: center;
+}
+
+#refresh-button {
+  display: block;
+  margin: 10px auto 0;
+  padding: 5px 10px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+#refresh-button:hover {
+  background-color: #0d8aee;
+}
+
+/* Stats box styling */
+.stats-box {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 15px;
+  margin-top: 10px;
+  margin-bottom: 15px;
+}
+
+.stats-box h2 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  font-size: 18px;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-gap: 10px;
+}
+
+.stat-item {
+  background-color: white;
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.stat-value {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 5px;
+  color: #2196f3;
+}
+
+.stat-label {
+  font-size: 12px;
+  color: #666;
+}
+
+.stats-updated {
+  font-size: 11px;
+  color: #999;
+  text-align: center;
+  margin-top: 10px;
+  margin-bottom: 0;
+}
+
+/* Error handling styles */
+.error-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border: 1px solid #f44336;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-width: 80%;
+  width: 300px;
+}
+
+.error-message {
+  color: #f44336;
+  font-weight: bold;
+  margin: 0 0 10px 0;
+}
+
+.error-close-btn {
+  position: absolute;
+  top: 5px;
+  right: 5px;
+  background: none;
+  border: none;
+  font-size: 16px;
+  color: #666;
+  cursor: pointer;
+}
+
+.notification {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  padding: 10px 15px;
+  border-radius: 4px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-width: 300px;
+  animation: slide-in 0.3s ease-out;
+}
+
+.error-notification {
+  background-color: #ffebee;
+  border-left: 4px solid #f44336;
+  color: #d32f2f;
+}
+
+.notification .close-btn {
+  background: none;
+  border: none;
+  color: inherit;
+  cursor: pointer;
+  float: right;
+  font-size: 16px;
+  opacity: 0.7;
+}
+
+.notification .close-btn:hover {
+  opacity: 1;
+}
+
+.tip-box {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: #fff;
+  border: 1px solid #2196f3;
+  border-radius: 4px;
+  padding: 15px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  z-index: 1000;
+  max-width: 90%;
+  width: 350px;
+}
+
+.tip-box h3 {
+  color: #2196f3;
+  margin-top: 0;
+  margin-bottom: 10px;
+  font-size: 16px;
+}
+
+.tip-box ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.tip-box li {
+  margin-bottom: 5px;
+  font-size: 13px;
+}
+
+.tip-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 15px;
+}
+
+.tip-close-btn, .try-again-btn {
+  padding: 5px 10px;
+  border: none;
+  border-radius: 4px;
+  cursor: pointer;
+  margin-left: 10px;
+}
+
+.tip-close-btn {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.try-again-btn {
+  background-color: #2196f3;
+  color: white;
+}
+
+.error-notice {
+  background-color: #fff3e0;
+  border: 1px solid #ff9800;
+  border-radius: 4px;
+  padding: 10px 15px;
+  margin-top: 15px;
+  font-size: 12px;
+}
+
+.error-timestamp {
+  color: #999;
+  font-size: 11px;
+  margin-top: 5px;
+  margin-bottom: 0;
+}
+
+@keyframes slide-in {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+/* Reset Connection Button */
+.reset-btn {
+  display: block;
+  width: auto;
+  margin: 10px auto;
+  padding: 5px 15px;
+  background-color: #ff9800;
+  color: white;
+  font-size: 12px;
+  border-radius: 4px;
+  text-align: center;
+}
+
+.reset-btn:hover {
+  background-color: #f57c00;
+}
+
+.reset-connection-tip-btn {
+  background-color: #ff9800;
+  color: white;
+}
+
+.reset-connection-tip-btn:hover {
+  background-color: #f57c00;
 } 

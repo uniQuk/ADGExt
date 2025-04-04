@@ -12,16 +12,47 @@ document.addEventListener('DOMContentLoaded', function() {
   const connectButton = document.getElementById('connect-button');
   const disconnectButton = document.getElementById('disconnect-button');
   const connectionError = document.getElementById('connection-error');
+  const statusValue = document.getElementById('status-value');
   
   // Error message elements
   const urlError = document.getElementById('url-error');
   const usernameError = document.getElementById('username-error');
   const passwordError = document.getElementById('password-error');
   
-  // Load saved values if they exist
-  loadSavedFormValues();
+  // Load saved values and check connection status
+  initializeUI();
   
-  // Check if we have saved connection settings and auto-connect
+  // Initialize the UI
+  function initializeUI() {
+    // Load saved form values
+    loadSavedFormValues();
+    
+    // Check current connection status
+    checkConnectionStatus();
+  }
+  
+  // Check the current connection status
+  function checkConnectionStatus() {
+    chrome.runtime.sendMessage({ action: 'getConnectionStatus' }, function(response) {
+      if (response && response.isConnected) {
+        // We're connected, show the stats view
+        connectionForm.classList.add('hidden');
+        statsContainer.classList.remove('hidden');
+        
+        // Update status
+        statusValue.textContent = response.protectionEnabled ? 'Protected' : 'Unprotected';
+        statusValue.style.color = response.protectionEnabled ? '#4a8' : '#e54';
+        
+        // In Phase 1.7, we'll load stats here
+      } else {
+        // We're not connected, show the connection form
+        statsContainer.classList.add('hidden');
+        connectionForm.classList.remove('hidden');
+      }
+    });
+  }
+  
+  // Load saved form values
   function loadSavedFormValues() {
     chrome.storage.local.get(['adguardUrl', 'adguardUsername', 'adguardPassword', 'rememberCredentials'], function(result) {
       if (result.adguardUrl) {
@@ -39,9 +70,6 @@ document.addEventListener('DOMContentLoaded', function() {
       if (result.rememberCredentials !== undefined) {
         rememberCheckbox.checked = result.rememberCredentials;
       }
-      
-      // If we have all the connection details, we could auto-connect
-      // but we'll implement that in Phase 1.4
     });
   }
   
@@ -68,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function() {
     connectButton.disabled = true;
     connectButton.textContent = 'Connecting...';
     
-    // Save connection details
+    // Save connection details except password
     const saveData = {
       adguardUrl: url,
       adguardUsername: username,
@@ -80,28 +108,50 @@ document.addEventListener('DOMContentLoaded', function() {
       saveData.adguardPassword = password;
     }
     
+    // Save data and then connect
     chrome.storage.local.set(saveData, function() {
-      // In Phase 1.4, we'll implement actual connection here
-      // For now, we'll just simulate a successful connection
-      
-      setTimeout(() => {
-        simulateConnection(url, username, password);
-      }, 1000);
+      // Connect to AdGuard Home
+      chrome.runtime.sendMessage({
+        action: 'connect',
+        url: url,
+        username: username,
+        password: password
+      }, function(response) {
+        // Reset button state
+        connectButton.classList.remove('loading');
+        connectButton.disabled = false;
+        connectButton.textContent = 'Connect';
+        
+        if (response && response.isConnected) {
+          // Connection successful
+          connectionForm.classList.add('hidden');
+          statsContainer.classList.remove('hidden');
+          
+          // Update status
+          statusValue.textContent = response.protectionEnabled ? 'Protected' : 'Unprotected';
+          statusValue.style.color = response.protectionEnabled ? '#4a8' : '#e54';
+        } else {
+          // Connection failed
+          const errorMsg = response && response.error ? response.error : 'Connection failed. Please check your credentials and try again.';
+          showError(connectionError, errorMsg);
+        }
+      });
     });
   });
   
   // Handle disconnect button
   disconnectButton.addEventListener('click', function() {
-    // Reset UI state
-    statsContainer.classList.add('hidden');
-    connectionForm.classList.remove('hidden');
-    
-    // In Phase 1.4, we'll implement actual disconnection
-    
-    // Reset form if remember is not checked
-    if (!rememberCheckbox.checked) {
-      connectForm.reset();
-    }
+    // Send disconnect message to background script
+    chrome.runtime.sendMessage({ action: 'disconnect' }, function(response) {
+      // Reset UI state
+      statsContainer.classList.add('hidden');
+      connectionForm.classList.remove('hidden');
+      
+      // Reset form if remember is not checked
+      if (!rememberCheckbox.checked) {
+        connectForm.reset();
+      }
+    });
   });
   
   // Input validation listeners
@@ -183,27 +233,6 @@ document.addEventListener('DOMContentLoaded', function() {
       return true;
     } catch (e) {
       return false;
-    }
-  }
-  
-  // Simulate successful connection (for development)
-  function simulateConnection(url, username, password) {
-    // Reset button state
-    connectButton.classList.remove('loading');
-    connectButton.disabled = false;
-    connectButton.textContent = 'Connect';
-    
-    // For now, always simulate success
-    const success = true;
-    
-    if (success) {
-      // Switch UI state
-      connectionForm.classList.add('hidden');
-      statsContainer.classList.remove('hidden');
-      document.getElementById('status-value').textContent = 'Connected';
-    } else {
-      // Show error message
-      showError(connectionError, 'Connection failed. Please check your credentials and try again.');
     }
   }
 }); 
