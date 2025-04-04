@@ -734,10 +734,11 @@ document.addEventListener('DOMContentLoaded', function() {
     if (!statusArea) return;
     
     statusArea.innerHTML = `
-      <div class="status-box">
-        <h2>Status: <span class="status-indicator ${isConnected ? 'connected' : 'disconnected'}">${isConnected ? getMessage('connected') : getMessage('disconnected')}</span></h2>
-        <p>Protection: <span class="status-indicator ${isProtectionEnabled ? 'enabled' : 'disabled'}">${isProtectionEnabled ? getMessage('enabled') : getMessage('disabled')}</span></p>
-        ${lastUpdated ? `<p class="stats-updated">${getMessage('lastUpdated')}: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
+      <div class="status-row">
+        <span class="status-label">${getMessage('status')}:</span>
+        <span class="status-indicator ${isConnected ? 'connected' : 'disconnected'}">${isConnected ? getMessage('connected') : getMessage('disconnected')}</span>
+      </div>
+      <div class="status-row">
         <button id="refresh-button">${getMessage('refresh')}</button>
       </div>
     `;

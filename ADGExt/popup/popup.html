@@ -33,11 +33,8 @@
     </div>
     
     <div id="stats-container" class="hidden">
-      <div id="status-area">
-        <!-- Status will be displayed here -->
-      </div>
-      
-      <div id="protection-toggle-container" class="protection-container">
+      <!-- Combined status and protection panel -->
+      <div class="status-protection-panel">
         <div class="toggle-header">
           <h2 data-i18n="protection">Protection</h2>
           <div class="toggle-switch">
@@ -46,33 +43,39 @@
           </div>
         </div>
         
-        <div class="temporary-disable hidden">
-          <button id="temp-disable-btn" class="temp-disable-btn" data-i18n="disableTemporarily">Disable Temporarily</button>
-          <div id="timer-modal" class="timer-modal hidden">
-            <h3 data-i18n="disableFor">Disable protection for:</h3>
-            <div class="timer-options">
-              <button class="timer-option" data-minutes="5">5 min</button>
-              <button class="timer-option" data-minutes="15">15 min</button>
-              <button class="timer-option" data-minutes="30">30 min</button>
-              <button class="timer-option" data-minutes="60">1 hr</button>
-              <button class="timer-option" data-minutes="180">3 hrs</button>
-              <button class="timer-option" data-minutes="360">6 hrs</button>
-            </div>
-            <div class="custom-timer">
-              <label for="custom-minutes" data-i18n="custom">Custom:</label>
-              <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Min">
-              <button id="apply-custom-timer" data-i18n="apply">Apply</button>
-            </div>
-            <div class="timer-modal-footer">
-              <button id="cancel-timer-selection" data-i18n="cancel">Cancel</button>
-            </div>
-          </div>
-          <div id="timer-container" class="timer-container hidden">
-            <span id="timer-value">--:--</span>
-            <button id="cancel-timer-btn" class="cancel-timer-btn" data-i18n="cancel">Cancel</button>
-          </div>
+        <div id="status-area" class="status-rows">
+          <!-- Status rows will be inserted here by JS -->
         </div>
         
+        <div id="protection-controls">
+          <div class="temporary-disable hidden">
+            <button id="temp-disable-btn" class="temp-disable-btn" data-i18n="disableTemporarily">Disable Temporarily</button>
+            <div id="timer-modal" class="timer-modal hidden">
+              <h3 data-i18n="disableFor">Disable protection for:</h3>
+              <div class="timer-options">
+                <button class="timer-option" data-minutes="5">5m</button>
+                <button class="timer-option" data-minutes="15">15m</button>
+                <button class="timer-option" data-minutes="30">30m</button>
+                <button class="timer-option" data-minutes="60">1h</button>
+                <button class="timer-option" data-minutes="180">3h</button>
+                <button class="timer-option" data-minutes="360">6h</button>
+              </div>
+              <div class="custom-timer">
+                <label for="custom-minutes" data-i18n="custom">Custom:</label>
+                <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Min">
+                <button id="apply-custom-timer" data-i18n="apply">Apply</button>
+              </div>
+              <div class="timer-modal-footer">
+                <button id="cancel-timer-selection" data-i18n="cancel">Cancel</button>
+              </div>
+            </div>
+            <div id="timer-container" class="timer-container hidden">
+              <span id="timer-value">--:--</span>
+              <button id="cancel-timer-btn" class="cancel-timer-btn" data-i18n="cancel">Cancel</button>
+            </div>
+          </div>
+        </div>
+
         <div class="dashboard-link-container">
           <button id="open-dashboard-btn" class="dashboard-btn" data-i18n="openDashboard" data-i18n-title="openDashboardDesc">Open Dashboard</button>
         </div>

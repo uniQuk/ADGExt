@@ -103,25 +103,28 @@ button:hover {
 .status-box {
   background-color: #f9f9f9;
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .status-box h2 {
   margin-top: 0;
-  margin-bottom: 12px;
-  font-size: 16px;
+  margin-bottom: 8px;
+  font-size: 14px;
   font-weight: 600;
   color: #444;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
 .status-indicator {
   display: inline-block;
   font-weight: 500;
-  font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 12px;
+  font-size: 11px;
+  padding: 2px 6px;
+  border-radius: 10px;
   margin-left: 5px;
 }
 
@@ -425,21 +428,62 @@ button:hover {
 .protection-container {
   background-color: #f9f9f9;
   border-radius: 6px;
-  padding: 12px;
-  margin-bottom: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+/* Combined status and protection panel */
+.status-protection-panel {
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 10px;
+  margin-bottom: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.status-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 13px;
+}
+
+.status-row .status-label {
+  font-weight: 500;
+  color: #444;
+}
+
+.status-row button {
+  width: auto;
+  margin-left: auto;
+  padding: 5px 10px;
+  font-size: 11px;
+}
+
+#refresh-button {
+  min-width: 70px;
 }
 
 .toggle-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
 }
 
 .toggle-header h2 {
   margin: 0;
-  font-size: 16px;
+  font-size: 14px;
   font-weight: 600;
   color: #444;
 }
@@ -447,8 +491,8 @@ button:hover {
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 40px;
-  height: 20px;
+  width: 36px;
+  height: 18px;
 }
 
 .toggle-input {
@@ -466,14 +510,14 @@ button:hover {
   bottom: 0;
   background-color: #ccc;
   transition: .3s;
-  border-radius: 20px;
+  border-radius: 18px;
 }
 
 .toggle-label:before {
   position: absolute;
   content: "";
-  height: 16px;
-  width: 16px;
+  height: 14px;
+  width: 14px;
   left: 2px;
   bottom: 2px;
   background-color: white;
@@ -486,7 +530,7 @@ button:hover {
 }
 
 .toggle-input:checked + .toggle-label:before {
-  transform: translateX(20px);
+  transform: translateX(18px);
 }
 
 .toggle-input:disabled + .toggle-label {
@@ -496,14 +540,14 @@ button:hover {
 
 /* Temporary disable styling */
 .temporary-disable {
-  margin-top: 10px;
+  margin-top: 8px;
 }
 
 .temp-disable-btn {
   background-color: #ff9800;
   color: white;
-  padding: 6px 10px;
-  font-size: 12px;
+  padding: 5px 8px;
+  font-size: 11px;
   border-radius: 4px;
   font-weight: 500;
 }
@@ -516,15 +560,15 @@ button:hover {
 .timer-modal {
   background-color: #fff;
   border-radius: 6px;
-  padding: 12px;
-  margin-top: 8px;
+  padding: 10px;
+  margin-top: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .timer-modal h3 {
   margin-top: 0;
-  margin-bottom: 10px;
-  font-size: 14px;
+  margin-bottom: 8px;
+  font-size: 13px;
   font-weight: 500;
   color: #444;
 }
@@ -532,17 +576,17 @@ button:hover {
 .timer-options {
   display: grid;
   grid-template-columns: 1fr 1fr 1fr;
-  grid-gap: 6px;
-  margin-bottom: 10px;
+  grid-gap: 4px;
+  margin-bottom: 8px;
 }
 
 .timer-option {
-  padding: 6px;
+  padding: 4px;
   background-color: #f1f1f1;
   border: none;
   border-radius: 4px;
   cursor: pointer;
-  font-size: 12px;
+  font-size: 11px;
   color: #444;
   width: 100%;
 }
@@ -554,8 +598,8 @@ button:hover {
 .custom-timer {
   display: flex;
   align-items: center;
-  margin-bottom: 10px;
-  gap: 6px;
+  margin-bottom: 8px;
+  gap: 4px;
 }
 
 .custom-timer label {
@@ -565,14 +609,14 @@ button:hover {
 }
 
 #custom-minutes {
-  width: 60px;
-  padding: 5px;
+  width: 50px;
+  padding: 4px;
 }
 
 #apply-custom-timer {
   width: auto;
-  padding: 5px 10px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
 }
 
 .timer-modal-footer {
@@ -583,8 +627,8 @@ button:hover {
   width: auto;
   background-color: #f1f1f1;
   color: #444;
-  font-size: 12px;
-  padding: 5px 10px;
+  font-size: 11px;
+  padding: 4px 8px;
 }
 
 .timer-container {
@@ -593,20 +637,20 @@ button:hover {
   justify-content: space-between;
   background-color: #fff4e5;
   border-radius: 4px;
-  padding: 8px;
-  margin-top: 8px;
+  padding: 6px;
+  margin-top: 6px;
 }
 
 #timer-value {
   font-weight: 600;
-  font-size: 14px;
+  font-size: 13px;
   color: #ff9800;
 }
 
 .cancel-timer-btn {
   width: auto;
-  padding: 4px 8px;
-  font-size: 11px;
+  padding: 3px 6px;
+  font-size: 10px;
   background-color: #f1f1f1;
   color: #444;
 }
@@ -714,7 +758,7 @@ button:active {
 
 /* Add the dashboard button styles */
 .dashboard-link-container {
-  margin-top: 10px;
+  margin-top: 8px;
   text-align: center;
 }
 
@@ -723,8 +767,8 @@ button:active {
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 7px 12px;
-  font-size: 12px;
+  padding: 5px 8px;
+  font-size: 11px;
   cursor: pointer;
   width: 100%;
   display: inline-flex;
