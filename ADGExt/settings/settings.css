@@ -600,4 +600,15 @@ select {
 #btnAddInstance {
     width: auto;
     display: inline-block;
+}
+
+.instance-item.hover {
+  background-color: rgba(37, 99, 235, 0.05);
+  border-color: rgba(37, 99, 235, 0.3);
+}
+
+.dark-theme .instance-item.hover,
+body.auto-theme .instance-item.hover {
+  background-color: rgba(59, 130, 246, 0.1);
+  border-color: rgba(59, 130, 246, 0.3);
 } 

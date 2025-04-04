@@ -1,11 +1,12 @@
 import { localizeHtml, getMessage, getFormattedMessage, formatDate, formatNumber } from '../src/utils/i18n.js';
+import { initializeTheme } from '../src/utils/theme.js';
 
 document.addEventListener('DOMContentLoaded', function() {
   // Localize HTML elements
   localizeHtml();
   
   // Apply theme settings 
-  applyThemeSettings();
+  initializeTheme();
   
   // Get references to DOM elements
   const connectForm = document.getElementById('connect-form');
@@ -26,6 +27,7 @@ document.addEventListener('DOMContentLoaded', function() {
   
   const settingsButton = document.getElementById('settings-button');
   const refreshButton = document.getElementById('refresh-button');
+  const logoutButton = document.getElementById('logout-button');
   const openDashboardBtn = document.getElementById('open-dashboard-btn');
   
   // Only call this if we're using the old timer UI
@@ -37,6 +39,13 @@ document.addEventListener('DOMContentLoaded', function() {
   settingsButton.addEventListener('click', function() {
     window.location.href = '../settings/settings.html';
   });
+  
+  // Add event listener for logout button
+  if (logoutButton) {
+    logoutButton.addEventListener('click', function() {
+      logoutUser();
+    });
+  }
   
   // Add event listener for open dashboard button
   if (openDashboardBtn) {
@@ -183,6 +192,12 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to check connection status
   function checkConnectionStatus() {
+    // Always ensure the settings button is accessible
+    settingsButton.addEventListener('click', function() {
+      window.location.href = '../settings/settings.html';
+    });
+
+    // Check if we have saved credentials
     chrome.storage.local.get(['adguardUrl', 'adguardUsername'], function(result) {
       if (result.adguardUrl && result.adguardUsername) {
         // If we have saved settings, try to connect automatically
@@ -215,8 +230,7 @@ document.addEventListener('DOMContentLoaded', function() {
               }
             });
           } else {
-            // Not connected, show connection form
-            // Pre-fill the form with saved URL and username
+            // Not connected, show connection form with saved URL
             document.getElementById('url').value = result.adguardUrl || '';
             document.getElementById('username').value = result.adguardUsername || '';
             
@@ -725,13 +739,7 @@ document.addEventListener('DOMContentLoaded', function() {
         <span class="status-label">${getMessage('status')}:</span>
         <span class="status-indicator ${isConnected ? 'connected' : 'disconnected'}">${isConnected ? getMessage('connected') : getMessage('disconnected')}</span>
       </div>
-      <div class="status-row">
-        <button id="refresh-button">${getMessage('refresh')}</button>
-      </div>
     `;
-    
-    // Add event listener to refresh button
-    document.getElementById('refresh-button').addEventListener('click', refreshStatus);
   }
   
   // Function to display stats
@@ -984,26 +992,6 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
 
-  // Function to apply theme settings
-  function applyThemeSettings() {
-    chrome.storage.local.get(['themePreference'], function(result) {
-      const themePreference = result.themePreference || 'light';
-      const body = document.body;
-      
-      // Remove all theme classes
-      body.classList.remove('light-theme', 'dark-theme', 'auto-theme');
-      
-      // Apply the preferred theme
-      if (themePreference === 'dark') {
-        body.classList.add('dark-theme');
-      } else if (themePreference === 'auto') {
-        body.classList.add('auto-theme');
-      } else {
-        body.classList.add('light-theme');
-      }
-    });
-  }
-
   // Update the refreshStatus function to add more feedback
   function refreshStatus() {
     // Show loading state on the refresh button
@@ -1025,6 +1013,26 @@ document.addEventListener('DOMContentLoaded', function() {
       } else {
         handleConnectionError(response?.error || { message: getMessage('failedToRefreshStatus') });
       }
+    });
+  }
+
+  /**
+   * Logout the user by disconnecting from the current instance
+   */
+  function logoutUser() {
+    chrome.runtime.sendMessage({ action: 'disconnect' }, function() {
+      // Show connection form and hide stats
+      connectionForm.classList.remove('hidden');
+      statsContainer.classList.add('hidden');
+      
+      // Reset form fields for security
+      document.getElementById('username').value = '';
+      document.getElementById('password').value = '';
+      
+      // Keep the URL field as it might be useful for reconnecting
+      
+      // Show success message
+      showSuccessNotification(getMessage('loggedOut') || 'Successfully logged out');
     });
   }
 }); 

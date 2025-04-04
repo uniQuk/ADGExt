@@ -505,13 +505,12 @@ async function getActiveInstanceName() {
   }
 }
 
-// Listen for messages from the extension popup or settings page
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  console.log('Received message:', message.action);
+// Message handler
+chrome.runtime.onMessage.addListener(function(request, sender, sendResponse) {
+  console.log('Received message:', request.action);
   
-  // Handle various actions
-  if (message.action === 'saveCredentials') {
-    saveCredentials(message.url, message.username, message.password)
+  if (request.action === 'saveCredentials') {
+    saveCredentials(request.url, request.username, request.password)
       .then(success => {
         sendResponse({ success });
       })
@@ -520,9 +519,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true; // Indicates async response
-  }
-  
-  if (message.action === 'testConnection') {
+  } else if (request.action === 'testConnection') {
     testConnection()
       .then(result => {
         sendResponse(result);
@@ -531,14 +528,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true;
-  }
-  
-  if (message.action === 'getActiveInstanceId') {
+  } else if (request.action === 'getActiveInstanceId') {
     sendResponse({ instanceId: activeInstanceId });
     return true;
-  }
-  
-  if (message.action === 'getActiveInstance') {
+  } else if (request.action === 'getActiveInstance') {
     getActiveInstance()
       .then(instance => {
         sendResponse({ 
@@ -551,10 +544,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true;
-  }
-  
-  if (message.action === 'switchActiveInstance') {
-    switchActiveInstance(message.instanceId)
+  } else if (request.action === 'switchActiveInstance') {
+    switchActiveInstance(request.instanceId)
       .then(success => {
         sendResponse({ success });
       })
@@ -563,9 +554,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true;
-  }
-  
-  if (message.action === 'refreshStatus') {
+  } else if (request.action === 'refreshStatus') {
     refreshStatus()
       .then(result => {
         sendResponse(result);
@@ -574,9 +563,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true;
-  }
-  
-  if (message.action === 'refreshStats') {
+  } else if (request.action === 'refreshStats') {
     refreshStats()
       .then(result => {
         sendResponse(result);
@@ -585,10 +572,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true;
-  }
-  
-  if (message.action === 'toggleProtection') {
-    toggleProtection(message.enabled)
+  } else if (request.action === 'toggleProtection') {
+    toggleProtection(request.enabled)
       .then(result => {
         sendResponse(result);
       })
@@ -596,10 +581,8 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true;
-  }
-  
-  if (message.action === 'disableTemporarily') {
-    disableTemporarily(message.minutes)
+  } else if (request.action === 'disableTemporarily') {
+    disableTemporarily(request.minutes)
       .then(result => {
         sendResponse(result);
       })
@@ -607,36 +590,11 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
         sendResponse({ success: false, error });
       });
     return true;
-  }
-  
-  if (message.action === 'resetConnection') {
-    // Clear storage and reset API client
-    chrome.storage.local.set({
-      connectionErrors: []
-    }, () => {
-      // Reset API client and try to initialize again
-      apiInstances = {};
-      initializeApiClient(true).then(() => {
-        sendResponse({ success: true });
-      }).catch(error => {
-        sendResponse({ success: false, error });
-      });
-    });
-    return true;
-  }
-  
-  if (message.action === 'resetApiClient') {
-    // Force reset the API client
-    apiInstances = {};
-    initializeApiClient(true).then(() => {
-      sendResponse({ success: true });
-    }).catch(error => {
-      sendResponse({ success: false, error });
-    });
-    return true;
-  }
-  
-  if (message.action === 'getConnectionStatus') {
+  } else if (request.action === 'cancelTemporaryDisable') {
+    // ... existing code ...
+  } else if (request.action === 'getTemporaryDisableStatus') {
+    // ... existing code ...
+  } else if (request.action === 'getConnectionStatus') {
     getActiveInstance().then(instance => {
       sendResponse({
         isConnected: !!instance,
@@ -650,18 +608,37 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
       sendResponse({ isConnected: false, error });
     });
     return true;
-  }
-  
-  if (message.action === 'getLastError') {
+  } else if (request.action === 'getLastError') {
     chrome.storage.local.get(['connectionErrors'], (result) => {
       const errors = result.connectionErrors || [];
       sendResponse({ error: errors.length > 0 ? errors[0] : null });
     });
     return true;
+  } else if (request.action === 'disconnect') {
+    // Clear the active connection state
+    clearConnectionState();
+    sendResponse({ success: true });
+    return true;
   }
   
   return false;
 });
+
+/**
+ * Clear the active connection state
+ */
+function clearConnectionState() {
+  // Mark as disconnected but keep the saved credentials
+  // This allows the user to reconnect without re-entering credentials
+  chrome.storage.local.set({
+    isConnected: false
+  });
+  
+  // Clear any active timers or protection state
+  clearTimeout(disableTimer);
+  disableTimer = null;
+  disableEndTime = null;
+}
 
 // Function to toggle AdGuard Home protection
 async function toggleProtection(enabled) {

@@ -3,6 +3,7 @@
  * Handles multiple instance management and user preferences
  */
 import { localizeHtml, getMessage, getFormattedMessage, createLocalizedElement } from '../src/utils/i18n.js';
+import { initializeTheme, applyTheme, saveThemePreference as saveTheme } from '../src/utils/theme.js';
 
 // DOM Elements
 const backButton = document.getElementById('btnBack');
@@ -34,7 +35,7 @@ document.addEventListener('DOMContentLoaded', () => {
     localizeHtml();
     
     // Apply theme settings
-    applyThemeSettings();
+    initializeTheme();
     
     // Set up refresh interval options with localized text
     setupRefreshIntervalOptions();
@@ -119,7 +120,7 @@ function renderInstanceList() {
     
     if (instances.length === 0) {
         const noInstancesElement = createLocalizedElement('div', 'noInstances', {
-            className: 'no-instances fade-in'
+            className: 'no-instances'
         });
         instanceList.appendChild(noInstancesElement);
         return;
@@ -127,12 +128,10 @@ function renderInstanceList() {
     
     instances.forEach((instance, index) => {
         const instanceElement = document.createElement('div');
-        instanceElement.classList.add('instance-item', 'fade-in', 'transition-normal');
-        // Add a small delay based on index for staggered animation
-        instanceElement.style.animationDelay = `${index * 0.1}s`;
+        instanceElement.classList.add('instance-item');
         
         if (instance.id === currentInstanceId) {
-            instanceElement.classList.add('active-instance', 'pulse');
+            instanceElement.classList.add('active-instance');
         }
         
         instanceElement.innerHTML = `
@@ -170,17 +169,15 @@ function renderInstanceList() {
             setActiveInstance(instanceId);
         });
         
-        // Add hover effect
+        // Add a simple hover effect without scaling
         item.addEventListener('mouseenter', () => {
-            if (item.classList.contains('active-instance')) return;
-            item.classList.add('scale-in');
-            item.classList.remove('scale-out');
+            if (!item.classList.contains('active-instance')) {
+                item.classList.add('hover');
+            }
         });
         
         item.addEventListener('mouseleave', () => {
-            if (item.classList.contains('active-instance')) return;
-            item.classList.remove('scale-in');
-            item.classList.add('scale-out');
+            item.classList.remove('hover');
         });
     });
 }
@@ -352,19 +349,25 @@ function deleteInstance(instanceId) {
  * Load user preferences from storage
  */
 function loadPreferences() {
-    chrome.storage.sync.get(['theme', 'refreshInterval', 'showNotifications'], (data) => {
-        // Theme preference
-        const theme = data.theme || 'auto';
-        themeSelector.value = theme;
-        applyTheme(theme);
-        
-        // Refresh interval
-        const refreshInterval = data.refreshInterval || 0;
-        refreshIntervalSelect.value = refreshInterval.toString();
-        
-        // Notifications
-        const showNotifications = data.showNotifications || false;
-        showNotificationsCheckbox.checked = showNotifications;
+    // Load refresh interval
+    chrome.storage.sync.get(['refreshInterval'], (data) => {
+        if (data.refreshInterval !== undefined) {
+            refreshIntervalSelect.value = data.refreshInterval;
+        }
+    });
+    
+    // Load notification preference
+    chrome.storage.sync.get(['showNotifications'], (data) => {
+        if (data.showNotifications !== undefined) {
+            showNotificationsCheckbox.checked = data.showNotifications;
+        }
+    });
+    
+    // Load theme preference using our utility
+    chrome.storage.local.get(['themePreference'], (data) => {
+        if (data.themePreference) {
+            themeSelector.value = data.themePreference;
+        }
     });
 }
 
@@ -373,29 +376,10 @@ function loadPreferences() {
  */
 function saveThemePreference() {
     const theme = themeSelector.value;
-    chrome.storage.sync.set({ theme }, () => {
+    saveTheme(theme).then(() => {
+        // Apply the theme immediately
         applyTheme(theme);
     });
-}
-
-/**
- * Apply the selected theme
- * @param {string} theme - Theme to apply (auto, light, dark)
- */
-function applyTheme(theme) {
-    const body = document.body;
-    
-    // Remove all theme classes
-    body.classList.remove('light-theme', 'dark-theme', 'auto-theme');
-    
-    // Apply the preferred theme
-    if (theme === 'dark') {
-        body.classList.add('dark-theme');
-    } else if (theme === 'auto') {
-        body.classList.add('auto-theme');
-    } else {
-        body.classList.add('light-theme');
-    }
 }
 
 /**
@@ -412,20 +396,6 @@ function saveRefreshInterval() {
 function saveNotificationPreference() {
     const showNotifications = showNotificationsCheckbox.checked;
     chrome.storage.sync.set({ showNotifications });
-}
-
-// Function to apply theme settings
-function applyThemeSettings(theme) {
-    if (!theme) {
-        // If theme is not provided, get it from storage
-        chrome.storage.local.get(['themePreference'], function(result) {
-            const themePreference = result.themePreference || 'light';
-            applyTheme(themePreference);
-        });
-    } else {
-        // Apply the provided theme directly
-        applyTheme(theme);
-    }
 }
 
 // Theme selector handling
