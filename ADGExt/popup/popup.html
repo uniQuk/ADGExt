@@ -45,21 +45,22 @@
             <label for="protection-toggle" class="toggle-label"></label>
           </div>
         </div>
+        
         <div class="temporary-disable hidden">
           <button id="temp-disable-btn" class="temp-disable-btn" data-i18n="disableTemporarily">Disable Temporarily</button>
           <div id="timer-modal" class="timer-modal hidden">
             <h3 data-i18n="disableFor">Disable protection for:</h3>
             <div class="timer-options">
-              <button class="timer-option" data-minutes="5">5 minutes</button>
-              <button class="timer-option" data-minutes="15">15 minutes</button>
-              <button class="timer-option" data-minutes="30">30 minutes</button>
-              <button class="timer-option" data-minutes="60">1 hour</button>
-              <button class="timer-option" data-minutes="180">3 hours</button>
-              <button class="timer-option" data-minutes="360">6 hours</button>
+              <button class="timer-option" data-minutes="5">5 min</button>
+              <button class="timer-option" data-minutes="15">15 min</button>
+              <button class="timer-option" data-minutes="30">30 min</button>
+              <button class="timer-option" data-minutes="60">1 hr</button>
+              <button class="timer-option" data-minutes="180">3 hrs</button>
+              <button class="timer-option" data-minutes="360">6 hrs</button>
             </div>
             <div class="custom-timer">
               <label for="custom-minutes" data-i18n="custom">Custom:</label>
-              <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Minutes">
+              <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Min">
               <button id="apply-custom-timer" data-i18n="apply">Apply</button>
             </div>
             <div class="timer-modal-footer">

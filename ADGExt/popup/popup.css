@@ -1,20 +1,21 @@
 body {
-  font-family: Arial, sans-serif;
-  width: 320px;
+  font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  width: 300px;
   margin: 0;
   padding: 0;
-  background-color: #f5f5f5;
+  background-color: #ffffff;
+  color: #333;
 }
 
 .container {
-  padding: 15px;
+  padding: 12px;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 15px;
-  border-bottom: 1px solid #ddd;
-  padding-bottom: 10px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #eaeaea;
+  padding-bottom: 8px;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -22,55 +23,67 @@ body {
 
 .header h1 {
   margin: 0;
-  color: #4a8;
-  font-size: 20px;
+  color: #3b7af0;
+  font-size: 18px;
+  font-weight: 600;
 }
 
 .settings-button {
   background: none;
   border: none;
-  font-size: 18px;
+  font-size: 16px;
   cursor: pointer;
   width: auto;
-  padding: 5px;
+  padding: 4px;
+  color: #666;
 }
 
 .settings-button:hover {
-  opacity: 0.8;
+  color: #3b7af0;
 }
 
 .form-group {
-  margin-bottom: 12px;
+  margin-bottom: 10px;
 }
 
 label {
   display: block;
-  margin-bottom: 5px;
-  font-weight: bold;
-  font-size: 14px;
+  margin-bottom: 4px;
+  font-weight: 500;
+  font-size: 13px;
+  color: #555;
 }
 
 input {
   width: 100%;
-  padding: 8px;
+  padding: 7px;
   box-sizing: border-box;
-  border: 1px solid #ccc;
+  border: 1px solid #ddd;
   border-radius: 4px;
+  font-size: 13px;
+}
+
+input:focus {
+  border-color: #3b7af0;
+  outline: none;
+  box-shadow: 0 0 0 2px rgba(59, 122, 240, 0.1);
 }
 
 button {
-  background-color: #4a8;
+  background-color: #3b7af0;
   color: white;
   border: none;
-  padding: 10px 15px;
+  padding: 8px 12px;
   border-radius: 4px;
   cursor: pointer;
   width: 100%;
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 13px;
+  transition: background-color 0.2s;
 }
 
 button:hover {
-  background-color: #3a7;
+  background-color: #2c5cd9;
 }
 
 .hidden {
@@ -78,33 +91,37 @@ button:hover {
 }
 
 .footer {
-  margin-top: 15px;
+  margin-top: 12px;
   text-align: center;
-  font-size: 12px;
-  color: #999;
-  border-top: 1px solid #ddd;
-  padding-top: 10px;
+  font-size: 11px;
+  color: #888;
+  border-top: 1px solid #eaeaea;
+  padding-top: 8px;
 }
 
 /* Status box styling */
 .status-box {
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .status-box h2 {
   margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
 }
 
 .status-indicator {
   display: inline-block;
-  font-weight: bold;
+  font-weight: 500;
+  font-size: 12px;
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 12px;
   margin-left: 5px;
 }
 
@@ -131,73 +148,80 @@ button:hover {
 .loading {
   text-align: center;
   font-style: italic;
-  color: #666;
+  color: #888;
+  font-size: 13px;
 }
 
 .error {
   color: #f44336;
-  font-weight: bold;
+  font-weight: 500;
   text-align: center;
+  font-size: 13px;
 }
 
 #refresh-button {
   display: block;
-  margin: 10px auto 0;
+  margin: 8px auto 0;
   padding: 5px 10px;
-  background-color: #2196f3;
+  background-color: #3b7af0;
   color: white;
   border: none;
   border-radius: 4px;
   cursor: pointer;
+  width: auto;
+  font-size: 12px;
 }
 
 #refresh-button:hover {
-  background-color: #0d8aee;
+  background-color: #2c5cd9;
 }
 
 /* Stats box styling */
 .stats-box {
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  padding: 15px;
-  margin-top: 10px;
-  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .stats-box h2 {
   margin-top: 0;
-  margin-bottom: 15px;
-  font-size: 18px;
+  margin-bottom: 12px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
 }
 
 .stats-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  grid-gap: 10px;
+  grid-gap: 8px;
 }
 
 .stat-item {
   background-color: white;
-  border-radius: 4px;
-  padding: 10px;
+  border-radius: 6px;
+  padding: 8px;
   text-align: center;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
 .stat-value {
-  font-size: 18px;
-  font-weight: bold;
-  margin-bottom: 5px;
-  color: #2196f3;
+  font-size: 16px;
+  font-weight: 600;
+  margin-bottom: 4px;
+  color: #3b7af0;
 }
 
 .stat-label {
-  font-size: 12px;
-  color: #666;
+  font-size: 11px;
+  color: #777;
 }
 
 .stats-updated {
-  font-size: 11px;
+  font-size: 10px;
   color: #999;
   text-align: center;
   margin-top: 10px;
@@ -399,29 +423,32 @@ button:hover {
 
 /* Protection toggle styling */
 .protection-container {
-  background-color: #f5f5f5;
-  border-radius: 4px;
-  padding: 15px;
-  margin-bottom: 15px;
+  background-color: #f9f9f9;
+  border-radius: 6px;
+  padding: 12px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .toggle-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 10px;
+  margin-bottom: 8px;
 }
 
 .toggle-header h2 {
   margin: 0;
-  font-size: 18px;
+  font-size: 16px;
+  font-weight: 600;
+  color: #444;
 }
 
 .toggle-switch {
   position: relative;
   display: inline-block;
-  width: 48px;
-  height: 24px;
+  width: 40px;
+  height: 20px;
 }
 
 .toggle-input {
@@ -438,8 +465,8 @@ button:hover {
   right: 0;
   bottom: 0;
   background-color: #ccc;
-  transition: .4s;
-  border-radius: 24px;
+  transition: .3s;
+  border-radius: 20px;
 }
 
 .toggle-label:before {
@@ -447,10 +474,10 @@ button:hover {
   content: "";
   height: 16px;
   width: 16px;
-  left: 4px;
-  bottom: 4px;
+  left: 2px;
+  bottom: 2px;
   background-color: white;
-  transition: .4s;
+  transition: .3s;
   border-radius: 50%;
 }
 
@@ -459,30 +486,26 @@ button:hover {
 }
 
 .toggle-input:checked + .toggle-label:before {
-  transform: translateX(24px);
+  transform: translateX(20px);
 }
 
 .toggle-input:disabled + .toggle-label {
-  opacity: 0.6;
+  opacity: 0.5;
   cursor: not-allowed;
 }
 
 /* Temporary disable styling */
 .temporary-disable {
   margin-top: 10px;
-  text-align: center;
 }
 
 .temp-disable-btn {
   background-color: #ff9800;
   color: white;
-  border: none;
-  padding: 8px 15px;
+  padding: 6px 10px;
+  font-size: 12px;
   border-radius: 4px;
-  cursor: pointer;
-  font-weight: bold;
-  width: auto;
-  display: inline-block;
+  font-weight: 500;
 }
 
 .temp-disable-btn:hover {
@@ -491,113 +514,101 @@ button:hover {
 
 /* Timer modal styling */
 .timer-modal {
-  position: fixed;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-  padding: 20px;
-  z-index: 1000;
-  width: 80%;
-  max-width: 300px;
+  background-color: #fff;
+  border-radius: 6px;
+  padding: 12px;
+  margin-top: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 }
 
 .timer-modal h3 {
   margin-top: 0;
-  text-align: center;
-  color: #333;
-  font-size: 16px;
+  margin-bottom: 10px;
+  font-size: 14px;
+  font-weight: 500;
+  color: #444;
 }
 
 .timer-options {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 15px;
+  grid-template-columns: 1fr 1fr 1fr;
+  grid-gap: 6px;
+  margin-bottom: 10px;
 }
 
 .timer-option {
-  background-color: #e0e0e0;
+  padding: 6px;
+  background-color: #f1f1f1;
   border: none;
   border-radius: 4px;
-  padding: 8px;
   cursor: pointer;
-  font-size: 14px;
-  color: #333;
-  transition: background-color 0.2s;
+  font-size: 12px;
+  color: #444;
+  width: 100%;
 }
 
 .timer-option:hover {
-  background-color: #d0d0d0;
+  background-color: #e0e0e0;
 }
 
 .custom-timer {
   display: flex;
-  flex-wrap: wrap;
   align-items: center;
-  margin-bottom: 15px;
-  gap: 5px;
+  margin-bottom: 10px;
+  gap: 6px;
 }
 
 .custom-timer label {
-  width: auto;
+  display: inline;
   margin-right: 5px;
+  font-weight: normal;
 }
 
 #custom-minutes {
-  width: 80px;
+  width: 60px;
   padding: 5px;
 }
 
 #apply-custom-timer {
   width: auto;
   padding: 5px 10px;
-  margin-left: 5px;
-  background-color: #2196f3;
   font-size: 12px;
 }
 
 .timer-modal-footer {
-  display: flex;
-  justify-content: flex-end;
+  text-align: right;
 }
 
 #cancel-timer-selection {
   width: auto;
-  background-color: #f5f5f5;
-  color: #333;
-  padding: 6px 12px;
+  background-color: #f1f1f1;
+  color: #444;
+  font-size: 12px;
+  padding: 5px 10px;
 }
 
 .timer-container {
-  margin-top: 10px;
   display: flex;
-  justify-content: center;
   align-items: center;
-  gap: 10px;
+  justify-content: space-between;
+  background-color: #fff4e5;
+  border-radius: 4px;
+  padding: 8px;
+  margin-top: 8px;
 }
 
 #timer-value {
-  font-weight: bold;
-  font-size: 16px;
+  font-weight: 600;
+  font-size: 14px;
   color: #ff9800;
 }
 
 .cancel-timer-btn {
-  background-color: #f44336;
-  color: white;
-  border: none;
-  padding: 4px 8px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 12px;
   width: auto;
-}
-
-.cancel-timer-btn:hover {
-  background-color: #d32f2f;
+  padding: 4px 8px;
+  font-size: 11px;
+  background-color: #f1f1f1;
+  color: #444;
 }
 
 /* Animation for toggle switch */
@@ -703,35 +714,30 @@ button:active {
 
 /* Add the dashboard button styles */
 .dashboard-link-container {
-  margin-top: 15px;
-  padding: 0 10px;
-  display: flex;
-  justify-content: center;
+  margin-top: 10px;
+  text-align: center;
 }
 
 .dashboard-btn {
-  background-color: #67B279;
+  background-color: #3b7af0;
   color: white;
   border: none;
   border-radius: 4px;
-  padding: 8px 15px;
+  padding: 7px 12px;
+  font-size: 12px;
   cursor: pointer;
-  font-size: 14px;
-  transition: background-color 0.2s ease, transform 0.2s ease;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  justify-content: center;
   width: 100%;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+}
+
+.dashboard-btn:before {
+  content: "↗";
+  font-size: 14px;
 }
 
 .dashboard-btn:hover {
-  background-color: #5BA46D;
-  transform: translateY(-1px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
-}
-
-.dashboard-btn:active {
-  transform: translateY(0);
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background-color: #2c5cd9;
 } 

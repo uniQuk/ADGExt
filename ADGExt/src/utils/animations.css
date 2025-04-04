@@ -5,24 +5,24 @@
 
 /* Base transition classes */
 .transition-fast {
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 .transition-normal {
-  transition: all 0.3s ease;
+  transition: all 0.25s ease;
 }
 
 .transition-slow {
-  transition: all 0.5s ease;
+  transition: all 0.4s ease;
 }
 
 /* Fade animations */
 .fade-in {
-  animation: fadeIn 0.3s ease forwards;
+  animation: fadeIn 0.2s ease forwards;
 }
 
 .fade-out {
-  animation: fadeOut 0.3s ease forwards;
+  animation: fadeOut 0.2s ease forwards;
 }
 
 @keyframes fadeIn {
@@ -37,40 +37,55 @@
 
 /* Slide animations */
 .slide-in {
-  animation: slideIn 0.3s ease forwards;
+  animation: slideIn 0.25s ease forwards;
 }
 
 .slide-out {
-  animation: slideOut 0.3s ease forwards;
+  animation: slideOut 0.25s ease forwards;
 }
 
 @keyframes slideIn {
-  from { transform: translateY(20px); opacity: 0; }
+  from { transform: translateY(10px); opacity: 0; }
   to { transform: translateY(0); opacity: 1; }
 }
 
 @keyframes slideOut {
   from { transform: translateY(0); opacity: 1; }
-  to { transform: translateY(20px); opacity: 0; }
+  to { transform: translateY(10px); opacity: 0; }
 }
 
 /* Scale animations */
 .scale-in {
-  animation: scaleIn 0.3s ease forwards;
+  animation: scaleIn 0.2s ease forwards;
 }
 
 .scale-out {
-  animation: scaleOut 0.3s ease forwards;
+  animation: scaleOut 0.2s ease forwards;
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
+  from { transform: scale(0.95); opacity: 0; }
   to { transform: scale(1); opacity: 1; }
 }
 
 @keyframes scaleOut {
   from { transform: scale(1); opacity: 1; }
-  to { transform: scale(0.9); opacity: 0; }
+  to { transform: scale(0.95); opacity: 0; }
+}
+
+/* Subtle button hover effect */
+button:not(:disabled) {
+  transition: transform 0.15s ease, background-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+button:not(:disabled):hover {
+  transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+button:not(:disabled):active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 /* Ripple effect for buttons */
@@ -88,8 +103,8 @@
   height: 0;
   transform: translate(-50%, -50%);
   border-radius: 50%;
-  background-color: rgba(255, 255, 255, 0.3);
-  animation: ripple 0.6s ease-out;
+  background-color: rgba(255, 255, 255, 0.25);
+  animation: ripple 0.5s ease-out;
   pointer-events: none;
 }
 
@@ -113,13 +128,13 @@
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0.4);
+    box-shadow: 0 0 0 0 rgba(59, 122, 240, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(13, 110, 253, 0);
+    box-shadow: 0 0 0 6px rgba(59, 122, 240, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(13, 110, 253, 0);
+    box-shadow: 0 0 0 0 rgba(59, 122, 240, 0);
   }
 }
 
@@ -145,12 +160,12 @@
 /* Spinner animation for loading states */
 .spinner {
   display: inline-block;
-  width: 20px;
-  height: 20px;
-  border: 3px solid rgba(0, 0, 0, 0.1);
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
-  border-top-color: var(--accent-color, #0d6efd);
-  animation: spin 1s linear infinite;
+  border-top-color: var(--accent-color, #3b7af0);
+  animation: spin 0.8s linear infinite;
 }
 
 @keyframes spin {
@@ -160,12 +175,50 @@
 
 /* Shake animation for errors */
 .shake {
-  animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+  animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both;
 }
 
 @keyframes shake {
   10%, 90% { transform: translate3d(-1px, 0, 0); }
   20%, 80% { transform: translate3d(2px, 0, 0); }
-  30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-  40%, 60% { transform: translate3d(4px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-3px, 0, 0); }
+  40%, 60% { transform: translate3d(3px, 0, 0); }
+}
+
+/* Smooth appearance for elements */
+.appear {
+  opacity: 0;
+  transform: translateY(5px);
+  animation: appear 0.3s forwards;
+}
+
+@keyframes appear {
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Staggered items appearance */
+.stagger-item {
+  opacity: 0;
+  animation: staggerAppear 0.3s forwards;
+}
+
+.stagger-item:nth-child(1) { animation-delay: 0s; }
+.stagger-item:nth-child(2) { animation-delay: 0.05s; }
+.stagger-item:nth-child(3) { animation-delay: 0.1s; }
+.stagger-item:nth-child(4) { animation-delay: 0.15s; }
+.stagger-item:nth-child(5) { animation-delay: 0.2s; }
+.stagger-item:nth-child(6) { animation-delay: 0.25s; }
+
+@keyframes staggerAppear {
+  from {
+    opacity: 0;
+    transform: translateY(5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 } 
