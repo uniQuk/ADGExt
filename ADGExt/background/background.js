@@ -4,6 +4,10 @@ import { AdGuardHomeAPI } from './api.js';
 import { encrypt, decrypt } from './crypto.js';
 
 let adguardApi = null;
+let statusCheckInterval = null;
+
+// Status check interval in milliseconds (default: 60 seconds)
+const STATUS_CHECK_INTERVAL = 60000;
 
 // Secure storage keys
 const SECURE_KEYS = {
@@ -41,11 +45,68 @@ chrome.runtime.onInstalled.addListener(() => {
           num_blocked_filtering: 0
         },
         lastUpdated: null,
-        connectionErrors: []
+        connectionErrors: [],
+        autoRefresh: true, // Enable auto refresh by default
+        refreshInterval: STATUS_CHECK_INTERVAL // Default refresh interval
       });
+    }
+    
+    // Start periodic status checks if we have connection details
+    if (result.adguardUrl) {
+      startPeriodicStatusChecks();
     }
   });
 });
+
+// Function to start periodic status checks
+function startPeriodicStatusChecks() {
+  // Clear any existing interval
+  if (statusCheckInterval) {
+    clearInterval(statusCheckInterval);
+  }
+  
+  // Check if auto refresh is enabled
+  chrome.storage.local.get(['autoRefresh', 'refreshInterval'], function(result) {
+    if (result.autoRefresh === false) {
+      console.log('Automatic refresh is disabled');
+      return;
+    }
+    
+    const interval = result.refreshInterval || STATUS_CHECK_INTERVAL;
+    
+    console.log(`Starting periodic status checks every ${interval / 1000} seconds`);
+    
+    // Create new interval
+    statusCheckInterval = setInterval(async () => {
+      console.log('Running periodic status check');
+      
+      // Only run if we're connected
+      const connectionStatus = await chrome.storage.local.get(['isConnected']);
+      if (!connectionStatus.isConnected) {
+        console.log('Not connected, skipping periodic check');
+        return;
+      }
+      
+      // Refresh status and stats
+      try {
+        await refreshStatus();
+        await refreshStats();
+        console.log('Periodic status check completed successfully');
+      } catch (error) {
+        console.error('Periodic status check failed:', error);
+      }
+    }, interval);
+  });
+}
+
+// Function to stop periodic status checks
+function stopPeriodicStatusChecks() {
+  if (statusCheckInterval) {
+    console.log('Stopping periodic status checks');
+    clearInterval(statusCheckInterval);
+    statusCheckInterval = null;
+  }
+}
 
 // Function to save credentials securely
 async function saveCredentials(url, username, password) {
@@ -113,10 +174,16 @@ async function initializeApiClient(forceNew = false) {
   if (credentials && credentials.url && credentials.username && credentials.password) {
     console.log('Creating new API client for:', credentials.url);
     adguardApi = new AdGuardHomeAPI(credentials.url, credentials.username, credentials.password);
+    
+    // Start periodic checks when API client is initialized
+    startPeriodicStatusChecks();
+    
     return adguardApi;
   }
   
   console.log('No credentials available, API client not initialized');
+  // Stop periodic checks if no credentials
+  stopPeriodicStatusChecks();
   return null;
 }
 
@@ -263,13 +330,16 @@ async function refreshStats() {
       return await api.getStats();
     });
     
-    // Store the stats
+    // Store the stats - include all available stats
     console.log('Stats refresh successful:', stats);
     chrome.storage.local.set({
       stats: {
-        num_dns_queries: stats.num_dns_queries,
-        num_blocked_filtering: stats.num_blocked_filtering,
-        avg_processing_time: stats.avg_processing_time
+        num_dns_queries: stats.num_dns_queries || 0,
+        num_blocked_filtering: stats.num_blocked_filtering || 0,
+        num_replaced_safebrowsing: stats.num_replaced_safebrowsing || 0,
+        num_replaced_parental: stats.num_replaced_parental || 0,
+        num_replaced_safesearch: stats.num_replaced_safesearch || 0,
+        avg_processing_time: stats.avg_processing_time || 0
       },
       lastStatsUpdated: new Date().toISOString()
     });
@@ -290,6 +360,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     saveCredentials(message.url, message.username, message.password)
       .then(success => {
         sendResponse({ success });
+        // Start periodic checks if credentials were saved successfully
+        if (success) {
+          startPeriodicStatusChecks();
+        }
       });
     return true;
   }
@@ -352,4 +426,105 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     });
     return true;
   }
-}); 
+  
+  if (message.action === 'toggleProtection') {
+    // Toggle the protection status
+    toggleProtection(message.enabled).then(result => {
+      sendResponse(result);
+    }).catch(error => {
+      sendResponse({ success: false, error });
+    });
+    return true;
+  }
+  
+  if (message.action === 'disableTemporarily') {
+    // Disable protection temporarily
+    disableTemporarily(message.minutes).then(result => {
+      sendResponse(result);
+    }).catch(error => {
+      sendResponse({ success: false, error });
+    });
+    return true;
+  }
+  
+  if (message.action === 'toggleAutoRefresh') {
+    // Toggle automatic refresh
+    chrome.storage.local.get(['autoRefresh'], function(result) {
+      const newValue = message.enabled === undefined ? !result.autoRefresh : message.enabled;
+      chrome.storage.local.set({ autoRefresh: newValue }, function() {
+        if (newValue) {
+          startPeriodicStatusChecks();
+        } else {
+          stopPeriodicStatusChecks();
+        }
+        sendResponse({ success: true, autoRefresh: newValue });
+      });
+    });
+    return true;
+  }
+  
+  if (message.action === 'setRefreshInterval') {
+    // Set refresh interval
+    const interval = message.interval || STATUS_CHECK_INTERVAL;
+    chrome.storage.local.set({ refreshInterval: interval }, function() {
+      // Restart periodic checks with new interval
+      startPeriodicStatusChecks();
+      sendResponse({ success: true, refreshInterval: interval });
+    });
+    return true;
+  }
+});
+
+// Function to toggle AdGuard Home protection
+async function toggleProtection(enabled) {
+  try {
+    console.log(`Toggling protection to: ${enabled ? 'enabled' : 'disabled'}`);
+    const api = await initializeApiClient();
+    if (!api) {
+      throw { message: 'API client not initialized' };
+    }
+    
+    return await retryOperation(async () => {
+      const result = await api.toggleProtection(enabled);
+      
+      // Update local storage with new protection state
+      await chrome.storage.local.set({
+        protectionEnabled: enabled,
+        lastUpdated: new Date().toISOString()
+      });
+      
+      return { success: true, data: result };
+    });
+  } catch (error) {
+    console.error('Failed to toggle protection:', error);
+    return { success: false, error };
+  }
+}
+
+// Function to temporarily disable protection
+async function disableTemporarily(minutes) {
+  try {
+    console.log(`Temporarily disabling protection for ${minutes} minutes`);
+    const api = await initializeApiClient();
+    if (!api) {
+      throw { message: 'API client not initialized' };
+    }
+    
+    return await retryOperation(async () => {
+      const result = await api.disableTemporarily(minutes);
+      
+      // Update local storage with new protection state
+      await chrome.storage.local.set({
+        protectionEnabled: false,
+        lastUpdated: new Date().toISOString(),
+        temporaryDisableMinutes: minutes,
+        temporaryDisableStartTime: new Date().toISOString()
+      });
+      
+      return { success: true, data: result };
+    });
+  } catch (error) {
+    console.error('Failed to disable temporarily:', error);
+    return { success: false, error };
+  }
+} 

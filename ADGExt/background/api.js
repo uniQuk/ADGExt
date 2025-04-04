@@ -45,6 +45,21 @@ export class AdGuardHomeAPI {
   handleApiError(error, operation) {
     console.error(`API Error during ${operation}:`, error);
     
+    // Check if it's a JSON parsing error
+    if (error.name === 'SyntaxError' && error.message.includes('JSON')) {
+      return {
+        code: 'PARSE_ERROR',
+        message: 'Response format error: The server returned an unexpected format. This might be an API version mismatch.',
+        details: error.message,
+        operation,
+        troubleshooting: [
+          'Make sure you are using the correct URL for your AdGuard Home instance',
+          'Check if your AdGuard Home version is compatible with this extension',
+          'Try updating your AdGuard Home to the latest version'
+        ]
+      };
+    }
+    
     // Check if it's a network error
     if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
       // Check for specific CORS-related messages
@@ -221,7 +236,19 @@ export class AdGuardHomeAPI {
         throw new Error(`HTTP error! Status: ${response.status} (${statusText})`);
       }
       
-      const data = await response.json();
+      // Check content type to determine how to handle the response
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        // Parse as JSON if content type is JSON
+        data = await response.json();
+      } else {
+        // Handle text responses (like "OK")
+        const text = await response.text();
+        data = { success: true, message: text };
+      }
+      
       console.log('Toggle protection successful:', data);
       return data;
     } catch (error) {
@@ -261,7 +288,19 @@ export class AdGuardHomeAPI {
         throw new Error(`HTTP error! Status: ${response.status} (${statusText})`);
       }
       
-      const data = await response.json();
+      // Check content type to determine how to handle the response
+      const contentType = response.headers.get('content-type');
+      let data;
+      
+      if (contentType && contentType.includes('application/json')) {
+        // Parse as JSON if content type is JSON
+        data = await response.json();
+      } else {
+        // Handle text responses (like "OK")
+        const text = await response.text();
+        data = { success: true, message: text };
+      }
+      
       console.log('Temporary disable successful:', data);
       return data;
     } catch (error) {

@@ -31,7 +31,49 @@
     </div>
     
     <div id="stats-container" class="hidden">
-      <!-- Stats will be displayed here once connected -->
+      <div id="status-area">
+        <!-- Status will be displayed here -->
+      </div>
+      
+      <div id="protection-toggle-container" class="protection-container">
+        <div class="toggle-header">
+          <h2>Protection</h2>
+          <div class="toggle-switch">
+            <input type="checkbox" id="protection-toggle" class="toggle-input">
+            <label for="protection-toggle" class="toggle-label"></label>
+          </div>
+        </div>
+        <div class="temporary-disable hidden">
+          <button id="temp-disable-btn" class="temp-disable-btn">Disable Temporarily</button>
+          <div id="timer-modal" class="timer-modal hidden">
+            <h3>Disable protection for:</h3>
+            <div class="timer-options">
+              <button class="timer-option" data-minutes="5">5 minutes</button>
+              <button class="timer-option" data-minutes="15">15 minutes</button>
+              <button class="timer-option" data-minutes="30">30 minutes</button>
+              <button class="timer-option" data-minutes="60">1 hour</button>
+              <button class="timer-option" data-minutes="180">3 hours</button>
+              <button class="timer-option" data-minutes="360">6 hours</button>
+            </div>
+            <div class="custom-timer">
+              <label for="custom-minutes">Custom:</label>
+              <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Minutes">
+              <button id="apply-custom-timer">Apply</button>
+            </div>
+            <div class="timer-modal-footer">
+              <button id="cancel-timer-selection">Cancel</button>
+            </div>
+          </div>
+          <div id="timer-container" class="timer-container hidden">
+            <span id="timer-value">--:--</span>
+            <button id="cancel-timer-btn" class="cancel-timer-btn">Cancel</button>
+          </div>
+        </div>
+      </div>
+      
+      <div id="stats-area">
+        <!-- Stats will be displayed here -->
+      </div>
     </div>
     
     <div class="footer">

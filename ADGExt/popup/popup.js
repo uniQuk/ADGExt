@@ -3,9 +3,55 @@ document.addEventListener('DOMContentLoaded', function() {
   const connectForm = document.getElementById('connect-form');
   const connectionForm = document.getElementById('connection-form');
   const statsContainer = document.getElementById('stats-container');
+  const protectionToggle = document.getElementById('protection-toggle');
+  const tempDisableBtn = document.getElementById('temp-disable-btn');
+  const timerModal = document.getElementById('timer-modal');
+  const timerOptions = document.querySelectorAll('.timer-option');
+  const cancelTimerSelectionBtn = document.getElementById('cancel-timer-selection');
+  const applyCustomTimerBtn = document.getElementById('apply-custom-timer');
+  const customMinutesInput = document.getElementById('custom-minutes');
+  const cancelTimerBtn = document.getElementById('cancel-timer-btn');
   
   // Check if we have saved connection settings and try to connect
   checkConnectionStatus();
+  
+  // Add event listener for protection toggle
+  protectionToggle.addEventListener('change', toggleProtection);
+  
+  // Add event listener for temporary disable button
+  if (tempDisableBtn) {
+    tempDisableBtn.addEventListener('click', showTimerModal);
+  }
+  
+  // Add event listeners for timer option buttons
+  timerOptions.forEach(option => {
+    option.addEventListener('click', function() {
+      const minutes = parseInt(this.getAttribute('data-minutes'), 10);
+      disableTemporarily(minutes);
+    });
+  });
+  
+  // Add event listener for custom timer button
+  if (applyCustomTimerBtn) {
+    applyCustomTimerBtn.addEventListener('click', function() {
+      const minutes = parseInt(customMinutesInput.value, 10);
+      if (isNaN(minutes) || minutes < 1) {
+        showErrorNotification('Please enter a valid number of minutes');
+        return;
+      }
+      disableTemporarily(minutes);
+    });
+  }
+  
+  // Add event listener for cancel timer selection button
+  if (cancelTimerSelectionBtn) {
+    cancelTimerSelectionBtn.addEventListener('click', hideTimerModal);
+  }
+  
+  // Add event listener for cancel timer button
+  if (cancelTimerBtn) {
+    cancelTimerBtn.addEventListener('click', cancelTemporaryDisable);
+  }
   
   // Handle form submission
   connectForm.addEventListener('submit', function(event) {
@@ -85,6 +131,9 @@ document.addEventListener('DOMContentLoaded', function() {
             // We're connected, show stats container
             connectionForm.classList.add('hidden');
             statsContainer.classList.remove('hidden');
+            
+            // Check if protection is temporarily disabled
+            checkTemporaryDisableStatus();
             
             // Refresh status and stats
             chrome.runtime.sendMessage({ action: 'refreshStatus' }, function(response) {
@@ -349,87 +398,469 @@ document.addEventListener('DOMContentLoaded', function() {
     connectionForm.appendChild(errorNotice);
   }
   
-  // Display connection status from storage
-  function displayStatusFromStorage() {
-    chrome.storage.local.get(['isConnected', 'protectionEnabled', 'lastUpdated'], function(result) {
-      const statusHtml = createStatusHtml(
-        result.isConnected, 
-        result.protectionEnabled,
-        result.lastUpdated ? new Date(result.lastUpdated).toLocaleString() : 'Never'
-      );
-      
-      // Update just the status section
-      const existingStats = document.getElementById('stats-section');
-      if (existingStats) {
-        // If stats section exists, only update the status section
-        document.getElementById('status-section').innerHTML = statusHtml;
+  // Function to show timer modal
+  function showTimerModal() {
+    timerModal.classList.remove('hidden');
+  }
+  
+  // Function to hide timer modal
+  function hideTimerModal() {
+    timerModal.classList.add('hidden');
+  }
+  
+  // Function to disable protection temporarily
+  function disableTemporarily(minutes) {
+    // Hide the timer modal
+    hideTimerModal();
+    
+    // Show loading notification
+    showErrorNotification(`Disabling protection for ${minutes} minutes...`);
+    
+    // Send message to background script
+    chrome.runtime.sendMessage({
+      action: 'disableTemporarily',
+      minutes: minutes
+    }, function(response) {
+      if (response && response.success) {
+        // Show success notification
+        showSuccessNotification(`Protection disabled for ${minutes} minutes`);
+        
+        // Update protection status in UI (disabled)
+        updateProtectionStatus(false);
+        
+        // Show the timer UI
+        showTimer(minutes);
+        
+        // Update the toggle switch
+        protectionToggle.checked = false;
       } else {
-        // Otherwise, replace the entire stats container
-        statsContainer.innerHTML = `
-          <div id="status-section">${statusHtml}</div>
-          <div id="stats-section">Loading stats...</div>
-        `;
-        displayStatsFromStorage();
+        // Show error notification
+        showErrorNotification('Failed to disable protection temporarily');
+        
+        // Show error details if available
+        if (response && response.error) {
+          showError(getErrorMessage(response.error));
+        }
       }
-      
-      // Add event listener to refresh button
-      document.getElementById('refresh-button').addEventListener('click', function() {
-        refreshAll();
-      });
     });
   }
   
-  // Display connection status from API response
-  function displayConnectionStatus(statusData) {
-    const isProtectionEnabled = statusData.protection_enabled;
+  // Function to show the timer UI
+  function showTimer(minutes) {
+    const timerContainer = document.getElementById('timer-container');
+    const timerValue = document.getElementById('timer-value');
+    const tempDisableBtn = document.getElementById('temp-disable-btn');
     
-    const statusHtml = createStatusHtml(
-      true, // We know we're connected since we got a response
-      isProtectionEnabled,
-      new Date().toLocaleString()
-    );
+    // Calculate end time
+    const endTime = new Date(Date.now() + minutes * 60 * 1000);
     
-    // Update just the status section
-    const existingStats = document.getElementById('stats-section');
-    if (existingStats) {
-      // If stats section exists, only update the status section
-      document.getElementById('status-section').innerHTML = statusHtml;
-    } else {
-      // Otherwise, replace the entire stats container
-      statsContainer.innerHTML = `
-        <div id="status-section">${statusHtml}</div>
-        <div id="stats-section">Loading stats...</div>
-      `;
+    // Show timer container and hide the disable button
+    timerContainer.classList.remove('hidden');
+    tempDisableBtn.classList.add('hidden');
+    
+    // Update timer display
+    updateTimerDisplay(endTime);
+    
+    // Store the end time in storage
+    chrome.storage.local.set({
+      timerEndTime: endTime.toISOString()
+    });
+    
+    // Start the countdown
+    startCountdown(endTime);
+  }
+  
+  // Function to start countdown
+  function startCountdown(endTime) {
+    // Clear any existing timer
+    if (window.timerInterval) {
+      clearInterval(window.timerInterval);
     }
     
-    // Add event listener to refresh button
-    document.getElementById('refresh-button').addEventListener('click', function() {
-      refreshAll();
+    // Create a new timer that updates every second
+    window.timerInterval = setInterval(function() {
+      const now = new Date();
+      const endTimeDate = new Date(endTime);
+      
+      // Check if timer has expired
+      if (now >= endTimeDate) {
+        clearInterval(window.timerInterval);
+        timerExpired();
+        return;
+      }
+      
+      // Update the timer display
+      updateTimerDisplay(endTimeDate);
+    }, 1000);
+  }
+  
+  // Function to update timer display
+  function updateTimerDisplay(endTime) {
+    const timerValue = document.getElementById('timer-value');
+    const now = new Date();
+    const diff = endTime - now;
+    
+    // Calculate minutes and seconds
+    const minutes = Math.floor(diff / 60000);
+    const seconds = Math.floor((diff % 60000) / 1000);
+    
+    // Format the time
+    timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+  }
+  
+  // Function to handle timer expiration
+  function timerExpired() {
+    // Show loading notification
+    showErrorNotification('Timer expired, re-enabling protection...');
+    
+    // Re-enable protection
+    chrome.runtime.sendMessage({
+      action: 'toggleProtection',
+      enabled: true
+    }, function(response) {
+      if (response && response.success) {
+        // Show success notification
+        showSuccessNotification('Protection re-enabled successfully');
+        
+        // Update protection status in UI
+        updateProtectionStatus(true);
+        
+        // Update the toggle switch
+        protectionToggle.checked = true;
+        
+        // Reset timer UI
+        resetTimerUI();
+      } else {
+        // Show error notification
+        showErrorNotification('Failed to re-enable protection');
+        
+        // Show error details if available
+        if (response && response.error) {
+          showError(getErrorMessage(response.error));
+        }
+      }
     });
   }
   
-  // Create the status HTML
+  // Function to reset timer UI
+  function resetTimerUI() {
+    const timerContainer = document.getElementById('timer-container');
+    const tempDisableBtn = document.getElementById('temp-disable-btn');
+    
+    // Hide timer container and show the disable button
+    timerContainer.classList.add('hidden');
+    tempDisableBtn.classList.remove('hidden');
+    
+    // Clear the stored end time
+    chrome.storage.local.remove('timerEndTime');
+    
+    // Clear any existing timer
+    if (window.timerInterval) {
+      clearInterval(window.timerInterval);
+    }
+  }
+  
+  // Function to cancel temporary disable
+  function cancelTemporaryDisable() {
+    // Show loading notification
+    showErrorNotification('Cancelling temporary disable...');
+    
+    // Re-enable protection
+    chrome.runtime.sendMessage({
+      action: 'toggleProtection',
+      enabled: true
+    }, function(response) {
+      if (response && response.success) {
+        // Show success notification
+        showSuccessNotification('Protection re-enabled');
+        
+        // Update protection status in UI
+        updateProtectionStatus(true);
+        
+        // Update the toggle switch
+        protectionToggle.checked = true;
+        
+        // Reset timer UI
+        resetTimerUI();
+      } else {
+        // Show error notification
+        showErrorNotification('Failed to re-enable protection');
+        
+        // Show error details if available
+        if (response && response.error) {
+          showError(getErrorMessage(response.error));
+        }
+      }
+    });
+  }
+
+  // Function to check if protection is temporarily disabled
+  function checkTemporaryDisableStatus() {
+    chrome.storage.local.get(['timerEndTime'], function(result) {
+      if (result.timerEndTime) {
+        const endTime = new Date(result.timerEndTime);
+        const now = new Date();
+        
+        // Check if timer has expired
+        if (now < endTime) {
+          // Timer still active, show the timer UI
+          showTimer(endTime);
+        } else {
+          // Timer expired, reset UI and storage
+          resetTimerUI();
+        }
+      }
+    });
+  }
+  
+  // Function to toggle protection
+  function toggleProtection() {
+    const isEnabled = protectionToggle.checked;
+    
+    // Disable toggle while request is in progress
+    protectionToggle.disabled = true;
+    
+    // Show loading notification
+    showErrorNotification(`${isEnabled ? 'Enabling' : 'Disabling'} protection...`);
+    
+    // Send message to background script
+    chrome.runtime.sendMessage({
+      action: 'toggleProtection',
+      enabled: isEnabled
+    }, function(response) {
+      // Re-enable toggle
+      protectionToggle.disabled = false;
+      
+      if (response && response.success) {
+        // Show success notification
+        showSuccessNotification(`Protection ${isEnabled ? 'enabled' : 'disabled'} successfully`);
+        
+        // Update protection status in UI
+        updateProtectionStatus(isEnabled);
+        
+        // Show/hide temporary disable button based on protection status
+        updateTemporaryDisableButton(isEnabled);
+      } else {
+        // Show error notification
+        showErrorNotification(`Failed to ${isEnabled ? 'enable' : 'disable'} protection`);
+        
+        // Revert toggle to previous state
+        protectionToggle.checked = !isEnabled;
+        
+        // Show error details if available
+        if (response && response.error) {
+          showError(getErrorMessage(response.error));
+        }
+      }
+    });
+  }
+  
+  // Function to update temporary disable button
+  function updateTemporaryDisableButton(isProtectionEnabled) {
+    const tempDisableContainer = document.querySelector('.temporary-disable');
+    
+    if (isProtectionEnabled) {
+      tempDisableContainer.classList.remove('hidden');
+    } else {
+      tempDisableContainer.classList.add('hidden');
+    }
+  }
+  
+  // Function to update protection status in UI
+  function updateProtectionStatus(isEnabled) {
+    // Update stored status
+    chrome.storage.local.set({
+      protectionEnabled: isEnabled
+    });
+    
+    // Update UI
+    updateStatusDisplay();
+  }
+  
+  // Function to update status display
+  function updateStatusDisplay() {
+    chrome.storage.local.get(['isConnected', 'protectionEnabled', 'lastUpdated'], function(result) {
+      createStatusHtml(
+        result.isConnected === true,
+        result.protectionEnabled === true,
+        result.lastUpdated || null
+      );
+    });
+  }
+  
+  // Function to show success notification
+  function showSuccessNotification(message) {
+    const notification = document.createElement('div');
+    notification.className = 'notification success-notification';
+    notification.innerHTML = `
+      <p>${message}</p>
+      <button class="close-btn">✕</button>
+    `;
+    
+    // Add to the page
+    document.body.appendChild(notification);
+    
+    // Add event listener to close button
+    notification.querySelector('.close-btn').addEventListener('click', function() {
+      notification.remove();
+    });
+    
+    // Auto close after 3 seconds
+    setTimeout(() => {
+      if (document.body.contains(notification)) {
+        notification.remove();
+      }
+    }, 3000);
+  }
+  
+  // Function to display connection status
+  function displayConnectionStatus(statusData) {
+    if (!statusData) return;
+    
+    // Extract protection status
+    const isProtectionEnabled = statusData.protection_enabled === true;
+    
+    // Update UI based on protection status
+    protectionToggle.checked = isProtectionEnabled;
+    
+    // Show/hide temporary disable button
+    updateTemporaryDisableButton(isProtectionEnabled);
+    
+    // Store the protection status and connection state
+    chrome.storage.local.set({
+      isConnected: true,
+      protectionEnabled: isProtectionEnabled,
+      lastUpdated: new Date().toISOString()
+    }, function() {
+      // Create status HTML after storage is updated
+      createStatusHtml(true, isProtectionEnabled, new Date().toISOString());
+    });
+  }
+  
+  // Function to create status HTML
   function createStatusHtml(isConnected, isProtectionEnabled, lastUpdated) {
-    return `
+    const statusArea = document.getElementById('status-area');
+    if (!statusArea) return;
+    
+    statusArea.innerHTML = `
       <div class="status-box">
-        <h2>AdGuard Home Status</h2>
-        <p>Connection: <span class="status-indicator ${isConnected ? 'connected' : 'disconnected'}">${isConnected ? 'Connected' : 'Disconnected'}</span></p>
+        <h2>Status: <span class="status-indicator ${isConnected ? 'connected' : 'disconnected'}">${isConnected ? 'Connected' : 'Disconnected'}</span></h2>
         <p>Protection: <span class="status-indicator ${isProtectionEnabled ? 'enabled' : 'disabled'}">${isProtectionEnabled ? 'Enabled' : 'Disabled'}</span></p>
-        <p>Last Updated: ${lastUpdated}</p>
+        ${lastUpdated ? `<p class="stats-updated">Last updated: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
         <button id="refresh-button">Refresh</button>
+      </div>
+    `;
+    
+    // Add event listener to refresh button
+    document.getElementById('refresh-button').addEventListener('click', refreshAll);
+  }
+  
+  // Function to display stats
+  function displayStats(statsData) {
+    if (!statsData) return;
+    
+    const statsArea = document.getElementById('stats-area');
+    if (!statsArea) return;
+    
+    displayStatsData(
+      statsData.num_dns_queries || 0,
+      statsData.num_blocked_filtering || 0,
+      statsData.avg_processing_time || 0,
+      new Date().toISOString()
+    );
+  }
+  
+  // Update displayStatsData to use the stats-area div
+  function displayStatsData(queries, blocked, avgTime, lastUpdated) {
+    const statsArea = document.getElementById('stats-area');
+    
+    // Calculate blocking percentage
+    const blockingPercentage = queries > 0 ? ((blocked / queries) * 100).toFixed(1) : 0;
+    
+    statsArea.innerHTML = `
+      <div class="stats-box">
+        <h2>DNS Query Statistics</h2>
+        <div class="stats-grid">
+          <div class="stat-item">
+            <div class="stat-value">${formatNumber(queries)}</div>
+            <div class="stat-label">DNS Queries</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${formatNumber(blocked)}</div>
+            <div class="stat-label">Blocked Queries</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${blockingPercentage}%</div>
+            <div class="stat-label">Blocking Rate</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-value">${avgTime ? avgTime.toFixed(2) + 'ms' : 'N/A'}</div>
+            <div class="stat-label">Avg Processing</div>
+          </div>
+        </div>
+        ${lastUpdated ? `<p class="stats-updated">Last updated: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
       </div>
     `;
   }
   
+  // Function to display status from storage (modified to use status-area)
+  function displayStatusFromStorage() {
+    chrome.storage.local.get(['isConnected', 'protectionEnabled', 'lastUpdated'], function(result) {
+      // Update toggle switch
+      if (protectionToggle) {
+        protectionToggle.checked = result.protectionEnabled === true;
+      }
+      
+      // Update temporary disable button
+      updateTemporaryDisableButton(result.protectionEnabled === true);
+      
+      // Create status HTML
+      createStatusHtml(
+        result.isConnected === true,
+        result.protectionEnabled === true,
+        result.lastUpdated || null
+      );
+    });
+  }
+  
+  // Function to refresh all data
+  function refreshAll() {
+    // Show loading state
+    const refreshButton = document.getElementById('refresh-button');
+    if (refreshButton) {
+      const originalButtonText = refreshButton.textContent;
+      refreshButton.textContent = 'Refreshing...';
+      refreshButton.disabled = true;
+      
+      // Refresh status and stats
+      chrome.runtime.sendMessage({ action: 'refreshStatus' }, function(response) {
+        if (refreshButton) {
+          refreshButton.textContent = originalButtonText;
+          refreshButton.disabled = false;
+        }
+        
+        if (response && response.success) {
+          displayConnectionStatus(response.data);
+          fetchAndDisplayStats();
+        } else {
+          // Failed to refresh
+          showErrorNotification('Failed to refresh status');
+          
+          // Show error details if available
+          if (response && response.error) {
+            showError(getErrorMessage(response.error));
+          }
+        }
+      });
+    }
+  }
+  
   // Fetch and display stats from the API
   function fetchAndDisplayStats() {
-    const statsSection = document.getElementById('stats-section') || document.createElement('div');
-    statsSection.id = 'stats-section';
-    statsSection.innerHTML = '<p class="loading">Loading stats...</p>';
+    const statsArea = document.getElementById('stats-area');
+    if (!statsArea) return;
     
-    if (!document.getElementById('stats-section')) {
-      statsContainer.appendChild(statsSection);
-    }
+    statsArea.innerHTML = '<p class="loading">Loading stats...</p>';
     
     chrome.runtime.sendMessage({ action: 'refreshStats' }, function(response) {
       if (response && response.success) {
@@ -441,11 +872,6 @@ document.addEventListener('DOMContentLoaded', function() {
         // Show error if there is one
         if (response && response.error) {
           showErrorNotification(response.error.message || 'Failed to load statistics');
-          
-          // Add reset button if needed
-          if (response.error.code === 'NETWORK_ERROR' || response.error.code === 'NOT_FOUND') {
-            addResetConnectionButton();
-          }
         }
       }
     });
@@ -456,135 +882,24 @@ document.addEventListener('DOMContentLoaded', function() {
     chrome.storage.local.get(['stats', 'lastStatsUpdated'], function(result) {
       if (result.stats) {
         displayStatsData(
-          result.stats.num_dns_queries,
-          result.stats.num_blocked_filtering,
-          result.stats.avg_processing_time,
-          result.lastStatsUpdated ? new Date(result.lastStatsUpdated).toLocaleString() : 'Never'
+          result.stats.num_dns_queries || 0,
+          result.stats.num_blocked_filtering || 0,
+          result.stats.avg_processing_time || 0,
+          result.lastStatsUpdated || new Date().toISOString()
         );
       } else {
         // No stats available
-        const statsSection = document.getElementById('stats-section');
-        if (statsSection) {
-          statsSection.innerHTML = '<p class="error">No statistics available</p>';
+        const statsArea = document.getElementById('stats-area');
+        if (statsArea) {
+          statsArea.innerHTML = '<p class="error">No statistics available</p>';
         }
       }
     });
   }
   
-  // Display stats from API response
-  function displayStats(statsData) {
-    displayStatsData(
-      statsData.num_dns_queries,
-      statsData.num_blocked_filtering,
-      statsData.avg_processing_time,
-      new Date().toLocaleString()
-    );
-  }
-  
-  // Create and display stats HTML
-  function displayStatsData(queries, blocked, avgTime, lastUpdated) {
-    const blockingPercentage = queries > 0 ? ((blocked / queries) * 100).toFixed(1) : 0;
-    
-    const statsHtml = `
-      <div class="stats-box">
-        <h2>DNS Statistics</h2>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value">${formatNumber(queries)}</div>
-            <div class="stat-label">Total Queries</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${formatNumber(blocked)}</div>
-            <div class="stat-label">Blocked</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${blockingPercentage}%</div>
-            <div class="stat-label">Blocking Rate</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${avgTime ? avgTime.toFixed(2) + 'ms' : 'N/A'}</div>
-            <div class="stat-label">Avg. Processing</div>
-          </div>
-        </div>
-        <p class="stats-updated">Last updated: ${lastUpdated}</p>
-      </div>
-    `;
-    
-    const statsSection = document.getElementById('stats-section');
-    if (statsSection) {
-      statsSection.innerHTML = statsHtml;
-    }
-  }
-  
   // Format large numbers with commas
   function formatNumber(num) {
     return num.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-  }
-  
-  // Refresh all data (status and stats)
-  function refreshAll() {
-    // Update status section to show loading
-    document.getElementById('status-section').innerHTML = '<p class="loading">Refreshing status...</p>';
-    
-    // Update stats section to show loading
-    const statsSection = document.getElementById('stats-section');
-    if (statsSection) {
-      statsSection.innerHTML = '<p class="loading">Refreshing stats...</p>';
-    }
-    
-    // First, reset the API client to ensure a fresh connection
-    chrome.runtime.sendMessage({ action: 'resetApiClient' }, function() {
-      // Then refresh status
-      chrome.runtime.sendMessage({ action: 'refreshStatus' }, function(response) {
-        if (response && response.success) {
-          displayConnectionStatus(response.data);
-          
-          // Then refresh stats
-          chrome.runtime.sendMessage({ action: 'refreshStats' }, function(statsResponse) {
-            if (statsResponse && statsResponse.success) {
-              displayStats(statsResponse.data);
-              
-              // Remove any reset connection button if exists
-              const resetBtn = document.getElementById('reset-connection-btn');
-              if (resetBtn) resetBtn.remove();
-            } else {
-              // Failed to refresh stats
-              const statsSection = document.getElementById('stats-section');
-              if (statsSection) {
-                const errorMessage = statsResponse && statsResponse.error ? 
-                  statsResponse.error.message || 'Unknown error' : 
-                  'Failed to refresh stats';
-                statsSection.innerHTML = `<p class="error">Failed to refresh stats: ${errorMessage}</p>`;
-                
-                // Add reset button
-                addResetConnectionButton();
-              }
-            }
-          });
-        } else {
-          // Failed to refresh status
-          const errorMessage = response && response.error ? 
-            response.error.message || 'Unknown error' : 
-            'Failed to refresh status';
-          
-          document.getElementById('status-section').innerHTML = `<p class="error">Failed to refresh status: ${errorMessage}</p>`;
-          
-          // Don't attempt to refresh stats if status refresh failed
-          const statsSection = document.getElementById('stats-section');
-          if (statsSection) {
-            statsSection.innerHTML = '<p class="error">Stats refresh skipped due to connection issues</p>';
-          }
-          
-          // Show troubleshooting tips if appropriate
-          if (response && response.error && response.error.code) {
-            showTroubleshootingTips(response.error);
-          }
-          
-          // Add reset button
-          addResetConnectionButton();
-        }
-      });
-    });
   }
   
   // Helper function to validate URL

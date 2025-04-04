@@ -239,6 +239,12 @@ button:hover {
   color: #d32f2f;
 }
 
+.success-notification {
+  background-color: #e8f5e9;
+  border-left: 4px solid #4caf50;
+  color: #2e7d32;
+}
+
 .notification .close-btn {
   background: none;
   border: none;
@@ -360,4 +366,207 @@ button:hover {
 
 .reset-connection-tip-btn:hover {
   background-color: #f57c00;
+}
+
+/* Protection toggle styling */
+.protection-container {
+  background-color: #f5f5f5;
+  border-radius: 4px;
+  padding: 15px;
+  margin-bottom: 15px;
+}
+
+.toggle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 10px;
+}
+
+.toggle-header h2 {
+  margin: 0;
+  font-size: 18px;
+}
+
+.toggle-switch {
+  position: relative;
+  display: inline-block;
+  width: 48px;
+  height: 24px;
+}
+
+.toggle-input {
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+
+.toggle-label {
+  position: absolute;
+  cursor: pointer;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: #ccc;
+  transition: .4s;
+  border-radius: 24px;
+}
+
+.toggle-label:before {
+  position: absolute;
+  content: "";
+  height: 16px;
+  width: 16px;
+  left: 4px;
+  bottom: 4px;
+  background-color: white;
+  transition: .4s;
+  border-radius: 50%;
+}
+
+.toggle-input:checked + .toggle-label {
+  background-color: #4caf50;
+}
+
+.toggle-input:checked + .toggle-label:before {
+  transform: translateX(24px);
+}
+
+.toggle-input:disabled + .toggle-label {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Temporary disable styling */
+.temporary-disable {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.temp-disable-btn {
+  background-color: #ff9800;
+  color: white;
+  border: none;
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  width: auto;
+  display: inline-block;
+}
+
+.temp-disable-btn:hover {
+  background-color: #f57c00;
+}
+
+/* Timer modal styling */
+.timer-modal {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 20px;
+  z-index: 1000;
+  width: 80%;
+  max-width: 300px;
+}
+
+.timer-modal h3 {
+  margin-top: 0;
+  text-align: center;
+  color: #333;
+  font-size: 16px;
+}
+
+.timer-options {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 15px;
+}
+
+.timer-option {
+  background-color: #e0e0e0;
+  border: none;
+  border-radius: 4px;
+  padding: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  color: #333;
+  transition: background-color 0.2s;
+}
+
+.timer-option:hover {
+  background-color: #d0d0d0;
+}
+
+.custom-timer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-bottom: 15px;
+  gap: 5px;
+}
+
+.custom-timer label {
+  width: auto;
+  margin-right: 5px;
+}
+
+#custom-minutes {
+  width: 80px;
+  padding: 5px;
+}
+
+#apply-custom-timer {
+  width: auto;
+  padding: 5px 10px;
+  margin-left: 5px;
+  background-color: #2196f3;
+  font-size: 12px;
+}
+
+.timer-modal-footer {
+  display: flex;
+  justify-content: flex-end;
+}
+
+#cancel-timer-selection {
+  width: auto;
+  background-color: #f5f5f5;
+  color: #333;
+  padding: 6px 12px;
+}
+
+.timer-container {
+  margin-top: 10px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+}
+
+#timer-value {
+  font-weight: bold;
+  font-size: 16px;
+  color: #ff9800;
+}
+
+.cancel-timer-btn {
+  background-color: #f44336;
+  color: white;
+  border: none;
+  padding: 4px 8px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 12px;
+  width: auto;
+}
+
+.cancel-timer-btn:hover {
+  background-color: #d32f2f;
 } 
