@@ -4,23 +4,34 @@ document.addEventListener('DOMContentLoaded', function() {
   // Localize HTML elements
   localizeHtml();
   
+  // Apply theme settings 
+  applyThemeSettings();
+  
   // Get references to DOM elements
   const connectForm = document.getElementById('connect-form');
   const connectionForm = document.getElementById('connection-form');
   const statsContainer = document.getElementById('stats-container');
   const protectionToggle = document.getElementById('protection-toggle');
   const tempDisableBtn = document.getElementById('temp-disable-btn');
+  const disableDropdown = document.getElementById('disable-dropdown');
+  const disableOptions = document.querySelectorAll('.disable-option');
+  
+  // References to old UI elements that might not exist anymore
   const timerModal = document.getElementById('timer-modal');
   const timerOptions = document.querySelectorAll('.timer-option');
   const cancelTimerSelectionBtn = document.getElementById('cancel-timer-selection');
   const applyCustomTimerBtn = document.getElementById('apply-custom-timer');
   const customMinutesInput = document.getElementById('custom-minutes');
   const cancelTimerBtn = document.getElementById('cancel-timer-btn');
+  
   const settingsButton = document.getElementById('settings-button');
+  const refreshButton = document.getElementById('refresh-button');
   const openDashboardBtn = document.getElementById('open-dashboard-btn');
   
-  // Localize timer options
-  localizeTimerOptions();
+  // Only call this if we're using the old timer UI
+  if (timerOptions && timerOptions.length > 0) {
+    localizeTimerOptions();
+  }
   
   // Add event listener for settings button
   settingsButton.addEventListener('click', function() {
@@ -38,20 +49,54 @@ document.addEventListener('DOMContentLoaded', function() {
   // Add event listener for protection toggle
   protectionToggle.addEventListener('change', toggleProtection);
   
-  // Add event listener for temporary disable button
-  if (tempDisableBtn) {
-    tempDisableBtn.addEventListener('click', showTimerModal);
+  // Add event listener for refresh button
+  if (refreshButton) {
+    refreshButton.addEventListener('click', function() {
+      refreshStatus();
+    });
   }
   
-  // Add event listeners for timer option buttons
-  timerOptions.forEach(option => {
+  // Add event listener for temporary disable button
+  if (tempDisableBtn) {
+    tempDisableBtn.addEventListener('click', function() {
+      if (tempDisableBtn.classList.contains('counting')) {
+        // If already disabled, clicking again should cancel
+        cancelTemporaryDisable();
+      } else {
+        // Toggle dropdown visibility
+        disableDropdown.classList.toggle('hidden');
+      }
+    });
+  }
+  
+  // Add event listeners for disable options
+  disableOptions.forEach(option => {
     option.addEventListener('click', function() {
-      const minutes = parseInt(this.getAttribute('data-minutes'), 10);
-      disableTemporarily(minutes);
+      const seconds = parseInt(this.getAttribute('data-seconds'), 10);
+      disableTemporarily(seconds);
+      disableDropdown.classList.add('hidden');
     });
   });
   
-  // Add event listener for custom timer button
+  // Close dropdown when clicking elsewhere
+  document.addEventListener('click', function(event) {
+    if (!tempDisableBtn.contains(event.target) && !disableDropdown.contains(event.target)) {
+      disableDropdown.classList.add('hidden');
+    }
+  });
+  
+  // Only add event listeners for old timer UI elements if they exist
+  if (timerOptions && timerOptions.length > 0) {
+    // Add event listeners for timer option buttons
+    timerOptions.forEach(option => {
+      option.addEventListener('click', function() {
+        const minutes = parseInt(this.getAttribute('data-minutes'), 10);
+        disableTemporarily(minutes);
+      });
+    });
+  }
+  
+  // Only add event listener if the element exists
   if (applyCustomTimerBtn) {
     applyCustomTimerBtn.addEventListener('click', function() {
       const minutes = parseInt(customMinutesInput.value, 10);
@@ -63,12 +108,12 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Add event listener for cancel timer selection button
+  // Only add event listener if the element exists
   if (cancelTimerSelectionBtn) {
     cancelTimerSelectionBtn.addEventListener('click', hideTimerModal);
   }
   
-  // Add event listener for cancel timer button
+  // Only add event listener if the element exists
   if (cancelTimerBtn) {
     cancelTimerBtn.addEventListener('click', cancelTemporaryDisable);
   }
@@ -347,38 +392,21 @@ document.addEventListener('DOMContentLoaded', function() {
   }
   
   // Function to disable protection temporarily
-  function disableTemporarily(minutes) {
-    // Hide the timer modal
-    hideTimerModal();
-    
-    // Show loading notification
-    showErrorNotification(getMessage('disablingProtectionForMinutes', { minutes: minutes }));
-    
-    // Send message to background script
+  function disableTemporarily(seconds) {
+    // Send message to background script to disable protection temporarily
     chrome.runtime.sendMessage({
       action: 'disableTemporarily',
-      minutes: minutes
+      seconds: seconds
     }, function(response) {
       if (response && response.success) {
-        // Show success notification
-        showSuccessNotification(getMessage('protectionDisabledForMinutes', { minutes: minutes }));
+        // Update button to show it's counting
+        tempDisableBtn.classList.add('counting');
         
-        // Update protection status in UI (disabled)
-        updateProtectionStatus(false);
-        
-        // Show the timer UI
-        showTimer(minutes);
-        
-        // Update the toggle switch
-        protectionToggle.checked = false;
+        // Calculate end time and start countdown
+        const endTime = Date.now() + (seconds * 1000);
+        startCountdown(endTime);
       } else {
-        // Show error notification
-        showErrorNotification(getMessage('failedToDisableProtectionTemporarily'));
-        
-        // Show error details if available
-        if (response && response.error) {
-          showError(getErrorMessage(response.error));
-        }
+        showErrorNotification(response?.error?.message || getMessage('failedToDisable'));
       }
     });
   }
@@ -418,45 +446,60 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to start countdown
   function startCountdown(endTime) {
-    // Clear any existing timer
-    if (window.timerInterval) {
-      clearInterval(window.timerInterval);
-    }
+    // Update the button text with time remaining
+    updateRemainingTime(endTime);
     
-    // Create a new timer that updates every second
-    window.timerInterval = setInterval(function() {
-      const now = new Date();
-      const endTimeDate = new Date(endTime);
-      
-      // Check if timer has expired
-      if (now >= endTimeDate) {
-        clearInterval(window.timerInterval);
-        timerExpired();
-        return;
+    // Update the countdown every second
+    const countdownInterval = setInterval(function() {
+      const shouldContinue = updateRemainingTime(endTime);
+      if (!shouldContinue) {
+        clearInterval(countdownInterval);
       }
-      
-      // Update the timer display
-      updateTimerDisplay(endTimeDate);
     }, 1000);
+    
+    // Store the interval ID to clear if needed
+    tempDisableBtn.dataset.countdownInterval = countdownInterval;
   }
   
-  // Function to update timer display
-  function updateTimerDisplay(endTime) {
-    const timerValue = document.getElementById('timer-value');
-    if (!timerValue) return;
+  // New function to update the time remaining on the button
+  function updateRemainingTime(endTime) {
+    const now = Date.now();
+    const timeLeft = endTime - now;
     
-    const now = new Date();
-    let diff = endTime - now;
+    if (timeLeft <= 0) {
+      // Time is up, reset the button
+      tempDisableBtn.textContent = getMessage('disableTemporarily');
+      tempDisableBtn.classList.remove('counting');
+      return false;
+    }
     
-    // Guard against negative values
-    if (diff < 0) diff = 0;
+    // Format the time left
+    const formattedTime = formatTimeLeft(timeLeft);
     
-    // Calculate minutes and seconds
-    const minutes = Math.floor(diff / 60000);
-    const seconds = Math.floor((diff % 60000) / 1000);
+    // Update the button text
+    tempDisableBtn.textContent = `${getMessage('enableIn')} ${formattedTime}`;
+    return true;
+  }
+  
+  // Helper function to format time left
+  function formatTimeLeft(milliseconds) {
+    const seconds = Math.floor(milliseconds / 1000);
     
-    // Format the time
-    timerValue.textContent = `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    if (seconds < 60) {
+      return `${seconds}s`;
+    } else if (seconds < 3600) {
+      const minutes = Math.floor(seconds / 60);
+      const remainingSeconds = seconds % 60;
+      return `${minutes}m ${remainingSeconds}s`;
+    } else if (seconds < 86400) {
+      const hours = Math.floor(seconds / 3600);
+      const minutes = Math.floor((seconds % 3600) / 60);
+      return `${hours}h ${minutes}m`;
+    } else {
+      const days = Math.floor(seconds / 86400);
+      const hours = Math.floor((seconds % 86400) / 3600);
+      return `${days}d ${hours}h`;
+    }
   }
   
   // Function to handle timer expiration
@@ -513,83 +556,27 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to cancel temporary disable
   function cancelTemporaryDisable() {
-    // Show loading notification
-    showErrorNotification(getMessage('cancellingTemporaryDisable'));
-    
-    // Re-enable protection
-    chrome.runtime.sendMessage({
-      action: 'toggleProtection',
-      enabled: true
-    }, function(response) {
+    chrome.runtime.sendMessage({ action: 'cancelTemporaryDisable' }, function(response) {
       if (response && response.success) {
-        // Show success notification
-        showSuccessNotification(getMessage('protectionReEnabled'));
+        // Clear the countdown interval
+        clearInterval(tempDisableBtn.dataset.countdownInterval);
         
-        // Update protection status in UI
-        updateProtectionStatus(true);
-        
-        // Update the toggle switch
-        protectionToggle.checked = true;
-        
-        // Reset timer UI
-        resetTimerUI();
+        // Reset the button text and style
+        tempDisableBtn.textContent = getMessage('disableTemporarily');
+        tempDisableBtn.classList.remove('counting');
       } else {
-        // Show error notification
-        showErrorNotification(getMessage('failedToReEnableProtection'));
-        
-        // Show error details if available
-        if (response && response.error) {
-          showError(getErrorMessage(response.error));
-        }
+        showErrorNotification(response?.error?.message || getMessage('failedToCancelDisable'));
       }
     });
   }
 
   // Function to check if protection is temporarily disabled
   function checkTemporaryDisableStatus() {
-    chrome.storage.local.get(['timerEndTime', 'protectionEnabled'], function(result) {
-      if (result.timerEndTime) {
-        const endTime = new Date(result.timerEndTime);
-        const now = new Date();
-        
-        // Check if timer has expired
-        if (now < endTime) {
-          // Timer still active, show the timer UI
-          showTimer(endTime);
-          
-          // Ensure protection toggle shows correct state
-          if (protectionToggle && result.protectionEnabled === false) {
-            protectionToggle.checked = false;
-          }
-        } else {
-          // Timer expired, reset UI and storage
-          resetTimerUI();
-          
-          // If protection is still disabled, re-enable it
-          if (result.protectionEnabled === false) {
-            // Re-enable protection
-            chrome.runtime.sendMessage({
-              action: 'toggleProtection',
-              enabled: true
-            }, function(response) {
-              if (response && response.success) {
-                // Show success notification
-                showSuccessNotification(getMessage('protectionReEnabledAfterExpiry'));
-                
-                // Update protection status in UI
-                updateProtectionStatus(true);
-                
-                // Update the toggle switch
-                if (protectionToggle) {
-                  protectionToggle.checked = true;
-                }
-              } else {
-                // Show error but don't retry automatically to avoid loops
-                showErrorNotification(getMessage('failedToReEnableAfterExpiry'));
-              }
-            });
-          }
-        }
+    chrome.runtime.sendMessage({ action: 'getTemporaryDisableStatus' }, function(response) {
+      if (response && response.isTemporarilyDisabled) {
+        // Protection is temporarily disabled, show countdown
+        tempDisableBtn.classList.add('counting');
+        startCountdown(response.endTime);
       }
     });
   }
@@ -744,7 +731,7 @@ document.addEventListener('DOMContentLoaded', function() {
     `;
     
     // Add event listener to refresh button
-    document.getElementById('refresh-button').addEventListener('click', refreshAll);
+    document.getElementById('refresh-button').addEventListener('click', refreshStatus);
   }
   
   // Function to display stats
@@ -770,29 +757,29 @@ document.addEventListener('DOMContentLoaded', function() {
     const blockingPercentage = queries > 0 ? ((blocked / queries) * 100).toFixed(1) : 0;
     
     statsArea.innerHTML = `
-      <div class="stats-box">
-        <h2>${getMessage('dnsQueryStatistics')}</h2>
-        <div class="stats-grid">
-          <div class="stat-item">
-            <div class="stat-value">${formatNumber(queries)}</div>
-            <div class="stat-label">${getMessage('dnsQueries')}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${formatNumber(blocked)}</div>
-            <div class="stat-label">${getMessage('blockedQueries')}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${blockingPercentage}%</div>
-            <div class="stat-label">${getMessage('blockingRate')}</div>
-          </div>
-          <div class="stat-item">
-            <div class="stat-value">${avgTime ? avgTime.toFixed(2) + 'ms' : 'N/A'}</div>
-            <div class="stat-label">${getMessage('avgProcessing')}</div>
-          </div>
-        </div>
-        ${lastUpdated ? `<p class="stats-updated">${getMessage('lastUpdated')}: ${new Date(lastUpdated).toLocaleTimeString()}</p>` : ''}
+      <div class="stat-item">
+        <div class="stat-value">${formatNumber(queries)}</div>
+        <div class="stat-label">${getMessage('dnsQueries')}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${formatNumber(blocked)}</div>
+        <div class="stat-label">${getMessage('blockedQueries')}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${blockingPercentage}%</div>
+        <div class="stat-label">${getMessage('blockingRate')}</div>
+      </div>
+      <div class="stat-item">
+        <div class="stat-value">${avgTime ? avgTime.toFixed(2) + 'ms' : 'N/A'}</div>
+        <div class="stat-label">${getMessage('avgProcessing')}</div>
       </div>
     `;
+    
+    // Update last updated text
+    const statsUpdated = document.getElementById('stats-updated');
+    if (statsUpdated && lastUpdated) {
+      statsUpdated.textContent = `${getMessage('lastUpdated')}: ${new Date(lastUpdated).toLocaleTimeString()}`;
+    }
   }
   
   // Function to display status from storage (modified to use status-area)
@@ -908,6 +895,11 @@ document.addEventListener('DOMContentLoaded', function() {
    * Localize timer options with appropriate units
    */
   function localizeTimerOptions() {
+    // Skip if the timer options no longer exist in the DOM
+    if (!timerOptions || timerOptions.length === 0) {
+      return;
+    }
+    
     timerOptions.forEach(option => {
       const minutes = parseInt(option.getAttribute('data-minutes'), 10);
       if (minutes === 60) {
@@ -920,8 +912,10 @@ document.addEventListener('DOMContentLoaded', function() {
       }
     });
     
-    // Also localize the custom minutes input placeholder
-    customMinutesInput.placeholder = getMessage('minutes');
+    // Only set placeholder if the element exists
+    if (customMinutesInput) {
+      customMinutesInput.placeholder = getMessage('minutes');
+    }
   }
 
   // Animate protection toggle
@@ -986,6 +980,50 @@ document.addEventListener('DOMContentLoaded', function() {
         // Failed to get instance or URL
         showErrorNotification(getMessage('failedToOpenDashboard'));
         console.error('Failed to get dashboard URL:', response);
+      }
+    });
+  }
+
+  // Function to apply theme settings
+  function applyThemeSettings() {
+    chrome.storage.local.get(['themePreference'], function(result) {
+      const themePreference = result.themePreference || 'light';
+      const body = document.body;
+      
+      // Remove all theme classes
+      body.classList.remove('light-theme', 'dark-theme', 'auto-theme');
+      
+      // Apply the preferred theme
+      if (themePreference === 'dark') {
+        body.classList.add('dark-theme');
+      } else if (themePreference === 'auto') {
+        body.classList.add('auto-theme');
+      } else {
+        body.classList.add('light-theme');
+      }
+    });
+  }
+
+  // Update the refreshStatus function to add more feedback
+  function refreshStatus() {
+    // Show loading state on the refresh button
+    if (refreshButton) {
+      refreshButton.classList.add('loading');
+      refreshButton.disabled = true;
+    }
+    
+    chrome.runtime.sendMessage({ action: 'refreshStatus' }, function(response) {
+      // Reset refresh button state
+      if (refreshButton) {
+        refreshButton.classList.remove('loading');
+        refreshButton.disabled = false;
+      }
+      
+      if (response && response.success) {
+        displayConnectionStatus(response.data);
+        fetchAndDisplayStats();
+      } else {
+        handleConnectionError(response?.error || { message: getMessage('failedToRefreshStatus') });
       }
     });
   }

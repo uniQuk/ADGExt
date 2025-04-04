@@ -5,16 +5,32 @@
   <title data-i18n="extName">AdGuard Home Manager</title>
   <link rel="stylesheet" href="../src/utils/animations.css">
   <link rel="stylesheet" href="popup.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
 </head>
-<body>
+<body class="light-theme">
   <div class="container">
     <div class="header">
       <h1 data-i18n="extName">AdGuard Home</h1>
-      <button id="settings-button" class="settings-button" data-i18n-title="settingsTitle" title="Settings">⚙️</button>
+      <div class="header-actions">
+        <button id="refresh-button" class="icon-button" data-i18n-title="refresh" title="Refresh">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+        </button>
+        <button id="settings-button" class="icon-button" data-i18n-title="settingsTitle" title="Settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <circle cx="12" cy="12" r="3"></circle>
+            <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
+          </svg>
+        </button>
+      </div>
     </div>
     
     <div id="connection-form">
-      <h2 data-i18n="connectToAdGuard">Connect to AdGuard Home</h2>
       <form id="connect-form">
         <div class="form-group">
           <label for="url" data-i18n="serverUrl">Server URL:</label>
@@ -33,7 +49,7 @@
     </div>
     
     <div id="stats-container" class="hidden">
-      <!-- Combined status and protection panel -->
+      <!-- Protection panel -->
       <div class="status-protection-panel">
         <div class="toggle-header">
           <h2 data-i18n="protection">Protection</h2>
@@ -44,45 +60,37 @@
         </div>
         
         <div id="status-area" class="status-rows">
-          <!-- Status rows will be inserted here by JS -->
+          <!-- Status rows inserted by JS -->
         </div>
         
         <div id="protection-controls">
-          <div class="temporary-disable hidden">
-            <button id="temp-disable-btn" class="temp-disable-btn" data-i18n="disableTemporarily">Disable Temporarily</button>
-            <div id="timer-modal" class="timer-modal hidden">
-              <h3 data-i18n="disableFor">Disable protection for:</h3>
-              <div class="timer-options">
-                <button class="timer-option" data-minutes="5">5m</button>
-                <button class="timer-option" data-minutes="15">15m</button>
-                <button class="timer-option" data-minutes="30">30m</button>
-                <button class="timer-option" data-minutes="60">1h</button>
-                <button class="timer-option" data-minutes="180">3h</button>
-                <button class="timer-option" data-minutes="360">6h</button>
+          <div class="temporary-disable">
+            <div class="disable-dropdown-wrapper">
+              <button id="temp-disable-btn" class="temp-disable-btn" data-i18n="disableTemporarily">Disable Temporarily</button>
+              <div id="disable-dropdown" class="disable-dropdown hidden">
+                <div class="disable-option" data-seconds="30">30 seconds</div>
+                <div class="disable-option" data-seconds="60">1 minute</div>
+                <div class="disable-option" data-seconds="600">10 minutes</div>
+                <div class="disable-option" data-seconds="3600">1 hour</div>
+                <div class="disable-option" data-seconds="86400">1 day</div>
               </div>
-              <div class="custom-timer">
-                <label for="custom-minutes" data-i18n="custom">Custom:</label>
-                <input type="number" id="custom-minutes" min="1" max="1440" placeholder="Min">
-                <button id="apply-custom-timer" data-i18n="apply">Apply</button>
-              </div>
-              <div class="timer-modal-footer">
-                <button id="cancel-timer-selection" data-i18n="cancel">Cancel</button>
-              </div>
-            </div>
-            <div id="timer-container" class="timer-container hidden">
-              <span id="timer-value">--:--</span>
-              <button id="cancel-timer-btn" class="cancel-timer-btn" data-i18n="cancel">Cancel</button>
             </div>
           </div>
         </div>
-
-        <div class="dashboard-link-container">
-          <button id="open-dashboard-btn" class="dashboard-btn" data-i18n="openDashboard" data-i18n-title="openDashboardDesc">Open Dashboard</button>
-        </div>
       </div>
       
-      <div id="stats-area">
-        <!-- Stats will be displayed here -->
+      <!-- Stats panel -->
+      <div class="stats-box">
+        <h2 data-i18n="statistics">Statistics</h2>
+        <div id="stats-area" class="stats-grid">
+          <!-- Stats will be displayed here -->
+        </div>
+        <div class="stats-updated" id="stats-updated"></div>
+      </div>
+      
+      <!-- Dashboard link -->
+      <div class="dashboard-link-container">
+        <button id="open-dashboard-btn" class="dashboard-btn" data-i18n="openDashboard" data-i18n-title="openDashboardDesc">Open Dashboard</button>
       </div>
     </div>
     

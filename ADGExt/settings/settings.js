@@ -33,6 +33,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Localize HTML elements
     localizeHtml();
     
+    // Apply theme settings
+    applyThemeSettings();
+    
     // Set up refresh interval options with localized text
     setupRefreshIntervalOptions();
     
@@ -380,20 +383,18 @@ function saveThemePreference() {
  * @param {string} theme - Theme to apply (auto, light, dark)
  */
 function applyTheme(theme) {
-    if (theme === 'auto') {
-        // Check system preference
-        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
-            document.body.dataset.theme = 'dark';
-        } else {
-            document.body.dataset.theme = 'light';
-        }
-        
-        // Listen for changes in system preference
-        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
-            document.body.dataset.theme = e.matches ? 'dark' : 'light';
-        });
+    const body = document.body;
+    
+    // Remove all theme classes
+    body.classList.remove('light-theme', 'dark-theme', 'auto-theme');
+    
+    // Apply the preferred theme
+    if (theme === 'dark') {
+        body.classList.add('dark-theme');
+    } else if (theme === 'auto') {
+        body.classList.add('auto-theme');
     } else {
-        document.body.dataset.theme = theme;
+        body.classList.add('light-theme');
     }
 }
 
@@ -411,4 +412,36 @@ function saveRefreshInterval() {
 function saveNotificationPreference() {
     const showNotifications = showNotificationsCheckbox.checked;
     chrome.storage.sync.set({ showNotifications });
+}
+
+// Function to apply theme settings
+function applyThemeSettings(theme) {
+    if (!theme) {
+        // If theme is not provided, get it from storage
+        chrome.storage.local.get(['themePreference'], function(result) {
+            const themePreference = result.themePreference || 'light';
+            applyTheme(themePreference);
+        });
+    } else {
+        // Apply the provided theme directly
+        applyTheme(theme);
+    }
+}
+
+// Theme selector handling
+if (themeSelector) {
+    // Load saved theme preference
+    chrome.storage.local.get(['themePreference'], function(result) {
+        const themePreference = result.themePreference || 'light';
+        themeSelector.value = themePreference;
+    });
+    
+    // Save theme preference when changed
+    themeSelector.addEventListener('change', function() {
+        const theme = themeSelector.value;
+        chrome.storage.local.set({ themePreference: theme }, function() {
+            // Apply the theme immediately
+            applyTheme(theme);
+        });
+    });
 } 
