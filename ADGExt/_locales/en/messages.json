@@ -277,8 +277,40 @@
     "message": "Timer expired, re-enabling protection...",
     "description": "Message shown when temporary disable timer expires"
   },
+  "protectionReEnabledAfterExpiry": {
+    "message": "Protection automatically re-enabled after timer expired",
+    "description": "Message shown when protection is automatically re-enabled after timer expiry"
+  },
+  "failedToReEnableAfterExpiry": {
+    "message": "Failed to automatically re-enable protection after timer expiry",
+    "description": "Error message when protection can't be automatically re-enabled"
+  },
   "cancellingTimer": {
     "message": "Cancelling temporary disable...",
     "description": "Message shown while cancelling temporary disable"
+  },
+  "openDashboard": {
+    "message": "Open Dashboard",
+    "description": "Button to open AdGuard Home dashboard"
+  },
+  "openDashboardDesc": {
+    "message": "Open the full AdGuard Home dashboard in a new tab",
+    "description": "Description of the open dashboard button"
+  },
+  "dashboardUrlMissing": {
+    "message": "Dashboard URL is missing or invalid",
+    "description": "Error message when dashboard URL is missing"
+  },
+  "dashboardUrlInvalid": {
+    "message": "The dashboard URL is invalid",
+    "description": "Error message when dashboard URL is invalid"
+  },
+  "failedToOpenDashboard": {
+    "message": "Failed to open dashboard. Please check your connection.",
+    "description": "Error message when dashboard cannot be opened"
+  },
+  "openingDashboard": {
+    "message": "Opening AdGuard Home dashboard...",
+    "description": "Message shown when opening the dashboard"
   }
 } 

@@ -17,6 +17,7 @@ document.addEventListener('DOMContentLoaded', function() {
   const customMinutesInput = document.getElementById('custom-minutes');
   const cancelTimerBtn = document.getElementById('cancel-timer-btn');
   const settingsButton = document.getElementById('settings-button');
+  const openDashboardBtn = document.getElementById('open-dashboard-btn');
   
   // Localize timer options
   localizeTimerOptions();
@@ -25,6 +26,11 @@ document.addEventListener('DOMContentLoaded', function() {
   settingsButton.addEventListener('click', function() {
     window.location.href = '../settings/settings.html';
   });
+  
+  // Add event listener for open dashboard button
+  if (openDashboardBtn) {
+    openDashboardBtn.addEventListener('click', openDashboard);
+  }
   
   // Check if we have saved connection settings and try to connect
   checkConnectionStatus();
@@ -84,9 +90,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Show loading state
     const connectButton = document.getElementById('connect-button');
-    const originalButtonText = connectButton.textContent;
-    connectButton.textContent = getMessage('connecting');
-    connectButton.disabled = true;
+    const originalButtonText = showConnectButtonLoader(connectButton);
     
     // Save credentials securely using the background script
     chrome.runtime.sendMessage({
@@ -97,8 +101,7 @@ document.addEventListener('DOMContentLoaded', function() {
     }, function(response) {
       if (!response || !response.success) {
         // Failed to save credentials
-        connectButton.textContent = originalButtonText;
-        connectButton.disabled = false;
+        restoreConnectButton(connectButton, originalButtonText);
         showError(getMessage('failedToSaveCredentials'));
         return;
       }
@@ -109,8 +112,7 @@ document.addEventListener('DOMContentLoaded', function() {
           // Connection test successful, now get status
           chrome.runtime.sendMessage({ action: 'refreshStatus' }, function(statusResponse) {
             // Reset button
-            connectButton.textContent = originalButtonText;
-            connectButton.disabled = false;
+            restoreConnectButton(connectButton, originalButtonText);
             
             if (statusResponse && statusResponse.success) {
               // Connection successful, switch UI state
@@ -127,8 +129,7 @@ document.addEventListener('DOMContentLoaded', function() {
           });
         } else {
           // Connection test failed
-          connectButton.textContent = originalButtonText;
-          connectButton.disabled = false;
+          restoreConnectButton(connectButton, originalButtonText);
           handleConnectionError(response?.error || { message: getMessage('connectionTestFailed') });
         }
       });
@@ -278,120 +279,43 @@ document.addEventListener('DOMContentLoaded', function() {
     }, 10000);
   }
   
-  // Function to show a non-modal error notification
-  function showErrorNotification(message) {
-    const notification = document.createElement('div');
-    notification.className = 'notification error-notification';
-    notification.innerHTML = `
-      <p>${message}</p>
-      <button class="close-btn">✕</button>
-    `;
-    
-    // Add to the page
-    document.body.appendChild(notification);
-    
-    // Add event listener to close button
-    notification.querySelector('.close-btn').addEventListener('click', function() {
-      notification.remove();
-    });
-    
-    // Auto close after 5 seconds
-    setTimeout(() => {
-      if (document.body.contains(notification)) {
-        notification.remove();
-      }
-    }, 5000);
+  // Add loader animation to connect button
+  function showConnectButtonLoader(button) {
+    const originalText = button.textContent;
+    button.innerHTML = `<span class="spinner"></span> ${getMessage('connecting')}`;
+    button.disabled = true;
+    return originalText;
   }
   
-  // Function to show troubleshooting tips based on error type
-  function showTroubleshootingTips(error) {
-    if (!error || !error.code) return;
+  // Restore connect button state
+  function restoreConnectButton(button, originalText) {
+    button.innerHTML = originalText;
+    button.disabled = false;
+  }
+  
+  // Show animated error notification
+  function showErrorNotification(message) {
+    const errorContainer = document.createElement('div');
+    errorContainer.className = 'error-notification fade-in';
+    errorContainer.textContent = message;
     
-    const tipBox = document.createElement('div');
-    tipBox.className = 'tip-box';
+    // Add to DOM
+    document.body.appendChild(errorContainer);
     
-    let tipContent = '';
+    // Animate in
+    setTimeout(() => {
+      errorContainer.classList.add('slide-in');
+    }, 10);
     
-    switch (error.code) {
-      case 'NETWORK_ERROR':
-        tipContent = `
-          <h3>${getMessage('troubleshootingTips')}:</h3>
-          <ul>
-            <li>${getMessage('makeSureAdGuardHomeIsRunning')}</li>
-            <li>${getMessage('checkThatTheURLIsCorrect')}</li>
-            <li>${getMessage('ensureYourNetworkConnectionIsStable')}</li>
-            <li>${getMessage('ifUsingAHostnameEnsureDNSResolutionIsWorking')}</li>
-            <li>${getMessage('checkIfAFirewallMightBeBlockingTheConnection')}</li>
-            <li>${getMessage('tryAddingOrRemovingControlFromTheURL')}</li>
-          </ul>
-        `;
-        break;
-      case 'AUTH_ERROR':
-        tipContent = `
-          <h3>${getMessage('authenticationFailed')}:</h3>
-          <ul>
-            <li>${getMessage('doubleCheckYourUsernameAndPassword')}</li>
-            <li>${getMessage('ensureYoureUsingAdminCredentials')}</li>
-            <li>${getMessage('tryResettingYourAdGuardHomePasswordIfYoureUnsure')}</li>
-          </ul>
-        `;
-        break;
-      case 'NOT_FOUND':
-        tipContent = `
-          <h3>${getMessage('apiEndpointNotFound')}:</h3>
-          <ul>
-            <li>${getMessage('makeSureTheURLPointsToAnAdGuardHomeInstance')}</li>
-            <li>${getMessage('tryAddingOrRemovingControlFromTheURL')}</li>
-            <li>${getMessage('verifyYourAdGuardHomeVersionIsCompatible')}</li>
-            <li>${getMessage('checkIfAdGuardHomeAPIisEnabledInSettings')}</li>
-          </ul>
-        `;
-        break;
-      default:
-        tipContent = `
-          <h3>${getMessage('troubleshootingTips')}:</h3>
-          <ul>
-            <li>${getMessage('verifyAdGuardHomeIsRunningCorrectly')}</li>
-            <li>${getMessage('tryUsingTheServerIPAddressInsteadOfHostname')}</li>
-            <li>${getMessage('checkYourNetworkConnection')}</li>
-            <li>${getMessage('tryRefreshingThePage')}</li>
-            <li>${getMessage('restartAdGuardHomeIfPossible')}</li>
-            <li>${getMessage('makeSureYoureUsingTheCorrectPortUsually80Or3000')}</li>
-          </ul>
-        `;
-    }
-    
-    tipBox.innerHTML = `
-      ${tipContent}
-      <div class="tip-actions">
-        <button class="tip-close-btn">${getMessage('close')}</button>
-        <button class="try-again-btn">${getMessage('tryAgain')}</button>
-        <button class="reset-connection-tip-btn">${getMessage('resetConnection')}</button>
-      </div>
-    `;
-    
-    // Add to the page
-    document.body.appendChild(tipBox);
-    
-    // Add event listeners
-    tipBox.querySelector('.tip-close-btn').addEventListener('click', function() {
-      tipBox.remove();
-    });
-    
-    tipBox.querySelector('.try-again-btn').addEventListener('click', function() {
-      tipBox.remove();
-      const connectButton = document.getElementById('connect-button');
-      if (connectButton) {
-        connectButton.click();
-      } else {
-        refreshAll();
-      }
-    });
-    
-    tipBox.querySelector('.reset-connection-tip-btn').addEventListener('click', function() {
-      tipBox.remove();
-      resetConnection();
-    });
+    // Automatically remove after 3 seconds
+    setTimeout(() => {
+      errorContainer.classList.remove('slide-in');
+      errorContainer.classList.add('slide-out');
+      
+      setTimeout(() => {
+        document.body.removeChild(errorContainer);
+      }, 300);
+    }, 3000);
   }
   
   // Function to show a previous connection error
@@ -466,7 +390,15 @@ document.addEventListener('DOMContentLoaded', function() {
     const tempDisableBtn = document.getElementById('temp-disable-btn');
     
     // Calculate end time
-    const endTime = new Date(Date.now() + minutes * 60 * 1000);
+    let endTime;
+    
+    // If minutes is a Date object, it's an endTime passed from checkTemporaryDisableStatus
+    if (minutes instanceof Date) {
+      endTime = minutes;
+    } else {
+      // Calculate new end time based on minutes
+      endTime = new Date(Date.now() + minutes * 60 * 1000);
+    }
     
     // Show timer container and hide the disable button
     timerContainer.classList.remove('hidden');
@@ -511,8 +443,13 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to update timer display
   function updateTimerDisplay(endTime) {
     const timerValue = document.getElementById('timer-value');
+    if (!timerValue) return;
+    
     const now = new Date();
-    const diff = endTime - now;
+    let diff = endTime - now;
+    
+    // Guard against negative values
+    if (diff < 0) diff = 0;
     
     // Calculate minutes and seconds
     const minutes = Math.floor(diff / 60000);
@@ -610,7 +547,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
   // Function to check if protection is temporarily disabled
   function checkTemporaryDisableStatus() {
-    chrome.storage.local.get(['timerEndTime'], function(result) {
+    chrome.storage.local.get(['timerEndTime', 'protectionEnabled'], function(result) {
       if (result.timerEndTime) {
         const endTime = new Date(result.timerEndTime);
         const now = new Date();
@@ -619,9 +556,39 @@ document.addEventListener('DOMContentLoaded', function() {
         if (now < endTime) {
           // Timer still active, show the timer UI
           showTimer(endTime);
+          
+          // Ensure protection toggle shows correct state
+          if (protectionToggle && result.protectionEnabled === false) {
+            protectionToggle.checked = false;
+          }
         } else {
           // Timer expired, reset UI and storage
           resetTimerUI();
+          
+          // If protection is still disabled, re-enable it
+          if (result.protectionEnabled === false) {
+            // Re-enable protection
+            chrome.runtime.sendMessage({
+              action: 'toggleProtection',
+              enabled: true
+            }, function(response) {
+              if (response && response.success) {
+                // Show success notification
+                showSuccessNotification(getMessage('protectionReEnabledAfterExpiry'));
+                
+                // Update protection status in UI
+                updateProtectionStatus(true);
+                
+                // Update the toggle switch
+                if (protectionToggle) {
+                  protectionToggle.checked = true;
+                }
+              } else {
+                // Show error but don't retry automatically to avoid loops
+                showErrorNotification(getMessage('failedToReEnableAfterExpiry'));
+              }
+            });
+          }
         }
       }
     });
@@ -629,41 +596,51 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to toggle protection
   function toggleProtection() {
+    // Get new toggle state
     const isEnabled = protectionToggle.checked;
     
-    // Disable toggle while request is in progress
-    protectionToggle.disabled = true;
-    
     // Show loading notification
-    showErrorNotification(getMessage('disablingProtection', { isEnabled: isEnabled ? getMessage('enabled') : getMessage('disabled') }));
+    showErrorNotification(getMessage('protectionStatusChanging', { status: isEnabled ? getMessage('enabling') : getMessage('disabling') }));
+    
+    // Animate the toggle
+    animateProtectionToggle(protectionToggle, isEnabled);
     
     // Send message to background script
     chrome.runtime.sendMessage({
       action: 'toggleProtection',
       enabled: isEnabled
     }, function(response) {
-      // Re-enable toggle
-      protectionToggle.disabled = false;
-      
       if (response && response.success) {
         // Show success notification
-        showSuccessNotification(getMessage('protection', { isEnabled: isEnabled ? getMessage('enabled') : getMessage('disabled') }));
+        showSuccessNotification(getMessage('protectionStatusChanged', { status: isEnabled ? getMessage('enabled') : getMessage('disabled') }));
         
         // Update protection status in UI
-        updateProtectionStatus(isEnabled);
+        displayConnectionStatus(response.data);
         
-        // Show/hide temporary disable button based on protection status
-        updateTemporaryDisableButton(isEnabled);
+        // Toggle temporary disable section
+        const temporaryDisable = document.querySelector('.temporary-disable');
+        if (temporaryDisable) {
+          if (isEnabled) {
+            temporaryDisable.classList.remove('hidden');
+            temporaryDisable.classList.add('fade-in');
+          } else {
+            temporaryDisable.classList.add('hidden');
+            temporaryDisable.classList.remove('fade-in');
+          }
+        }
       } else {
         // Show error notification
-        showErrorNotification(getMessage('failedTo', { isEnabled: isEnabled ? getMessage('enable') : getMessage('disable') }));
+        showErrorNotification(getMessage('failedToToggleProtection'));
         
         // Revert toggle to previous state
         protectionToggle.checked = !isEnabled;
         
+        // Add shake animation to the toggle
+        animateShake(protectionToggle.closest('.toggle-switch'));
+        
         // Show error details if available
         if (response && response.error) {
-          showError(getErrorMessage(response.error));
+          console.error('Protection toggle error:', response.error);
         }
       }
     });
@@ -702,28 +679,28 @@ document.addEventListener('DOMContentLoaded', function() {
     });
   }
   
-  // Function to show success notification
+  // Show animated success notification
   function showSuccessNotification(message) {
-    const notification = document.createElement('div');
-    notification.className = 'notification success-notification';
-    notification.innerHTML = `
-      <p>${message}</p>
-      <button class="close-btn">✕</button>
-    `;
+    const successContainer = document.createElement('div');
+    successContainer.className = 'success-notification fade-in';
+    successContainer.textContent = message;
     
-    // Add to the page
-    document.body.appendChild(notification);
+    // Add to DOM
+    document.body.appendChild(successContainer);
     
-    // Add event listener to close button
-    notification.querySelector('.close-btn').addEventListener('click', function() {
-      notification.remove();
-    });
-    
-    // Auto close after 3 seconds
+    // Animate in
     setTimeout(() => {
-      if (document.body.contains(notification)) {
-        notification.remove();
-      }
+      successContainer.classList.add('slide-in');
+    }, 10);
+    
+    // Automatically remove after 3 seconds
+    setTimeout(() => {
+      successContainer.classList.remove('slide-in');
+      successContainer.classList.add('slide-out');
+      
+      setTimeout(() => {
+        document.body.removeChild(successContainer);
+      }, 300);
     }, 3000);
   }
   
@@ -944,5 +921,71 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Also localize the custom minutes input placeholder
     customMinutesInput.placeholder = getMessage('minutes');
+  }
+
+  // Animate protection toggle
+  function animateProtectionToggle(toggle, isEnabled) {
+    if (!toggle) return;
+    
+    const statusIndicator = document.querySelector('.status-indicator' + (isEnabled ? '.enabled' : '.disabled'));
+    if (statusIndicator) {
+      // Add pulse animation briefly
+      statusIndicator.classList.add('pulse');
+      
+      // Remove after animation completes
+      setTimeout(() => {
+        statusIndicator.classList.remove('pulse');
+      }, 1500);
+    }
+    
+    // Add ripple effect to toggle container
+    const toggleContainer = toggle.closest('.toggle-header');
+    if (toggleContainer) {
+      toggleContainer.classList.add('ripple');
+      
+      // Remove ripple class after animation completes
+      setTimeout(() => {
+        toggleContainer.classList.remove('ripple');
+      }, 600);
+    }
+  }
+
+  // Add shake animation to element
+  function animateShake(element) {
+    if (!element) return;
+    
+    element.classList.add('shake');
+    
+    // Remove class after animation completes
+    setTimeout(() => {
+      element.classList.remove('shake');
+    }, 500);
+  }
+  
+  // Function to open the AdGuard Home dashboard in a new tab
+  function openDashboard() {
+    // Show loading state
+    showErrorNotification(getMessage('openingDashboard'));
+    
+    // Get the current active instance from background script
+    chrome.runtime.sendMessage({ action: 'getActiveInstance' }, function(response) {
+      if (response && response.success && response.instance && response.instance.url) {
+        // Open the dashboard URL in a new tab
+        const dashboardUrl = response.instance.url;
+        try {
+          // Ensure URL is valid
+          new URL(dashboardUrl);
+          chrome.tabs.create({ url: dashboardUrl });
+        } catch (e) {
+          // URL is invalid
+          showErrorNotification(getMessage('dashboardUrlInvalid'));
+          console.error('Invalid dashboard URL:', dashboardUrl, e);
+        }
+      } else {
+        // Failed to get instance or URL
+        showErrorNotification(getMessage('failedToOpenDashboard'));
+        console.error('Failed to get dashboard URL:', response);
+      }
+    });
   }
 }); 

@@ -249,16 +249,29 @@ button:hover {
   animation: slide-in 0.3s ease-out;
 }
 
+.error-notification,
+.success-notification {
+  position: fixed;
+  top: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 15px;
+  border-radius: 4px;
+  color: white;
+  z-index: 1000;
+  max-width: 90%;
+  text-align: center;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+  opacity: 0;
+  transform: translateX(-50%) translateY(-20px);
+}
+
 .error-notification {
-  background-color: #ffebee;
-  border-left: 4px solid #f44336;
-  color: #d32f2f;
+  background-color: #f44336;
 }
 
 .success-notification {
-  background-color: #e8f5e9;
-  border-left: 4px solid #4caf50;
-  color: #2e7d32;
+  background-color: #4caf50;
 }
 
 .notification .close-btn {
@@ -585,4 +598,140 @@ button:hover {
 
 .cancel-timer-btn:hover {
   background-color: #d32f2f;
+}
+
+/* Animation for toggle switch */
+.toggle-switch {
+  transition: transform 0.3s ease;
+}
+
+.toggle-switch:active {
+  transform: scale(0.9);
+}
+
+/* Stats animation */
+.stats-grid {
+  opacity: 1;
+  transition: opacity 0.3s ease;
+}
+
+.stats-grid.loading {
+  opacity: 0.6;
+}
+
+.stat-value {
+  transition: color 0.3s ease, transform 0.3s ease;
+}
+
+.stat-value.updated {
+  animation: pulse 0.5s ease-out;
+}
+
+@keyframes pulse {
+  0% { transform: scale(1); }
+  50% { transform: scale(1.1); }
+  100% { transform: scale(1); }
+}
+
+/* Timer options */
+.timer-options button {
+  transition: background-color 0.3s ease, transform 0.2s ease;
+}
+
+.timer-options button:hover {
+  transform: translateY(-2px);
+}
+
+.timer-options button:active {
+  transform: translateY(0) scale(0.95);
+}
+
+/* Improve form transitions */
+#connect-form input,
+#connect-form button {
+  transition: border-color 0.3s ease, transform 0.2s ease, background-color 0.3s ease;
+}
+
+#connect-form input:focus {
+  border-color: #4a8;
+  transform: translateY(-2px);
+}
+
+/* Add animation to the loader */
+.spinner {
+  display: inline-block;
+  width: 16px;
+  height: 16px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50%;
+  border-top-color: white;
+  animation: spin 1s linear infinite;
+  margin-right: 5px;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* Timer container animations */
+.timer-container {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+  animation: fadeIn 0.3s ease forwards;
+}
+
+.timer-container.hidden {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Button tap/press effect */
+button {
+  position: relative;
+  overflow: hidden;
+  transform: translateZ(0);
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+/* Status indicators */
+.status-indicator {
+  transition: background-color 0.3s ease;
+}
+
+/* Add the dashboard button styles */
+.dashboard-link-container {
+  margin-top: 15px;
+  padding: 0 10px;
+  display: flex;
+  justify-content: center;
+}
+
+.dashboard-btn {
+  background-color: #67B279;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  padding: 8px 15px;
+  cursor: pointer;
+  font-size: 14px;
+  transition: background-color 0.2s ease, transform 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+}
+
+.dashboard-btn:hover {
+  background-color: #5BA46D;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.15);
+}
+
+.dashboard-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 } 

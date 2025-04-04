@@ -7,6 +7,7 @@ import { encrypt, decrypt } from './crypto.js';
 let apiInstances = {};
 let statusCheckInterval = null;
 let activeInstanceId = null;
+let previousProtectionStatus = null;
 
 // Status check interval in milliseconds (default: 60 seconds)
 const STATUS_CHECK_INTERVAL = 60000;
@@ -30,16 +31,34 @@ const RETRY_CONFIG = {
   RETRY_DELAY: 1000, // ms
 };
 
+// Function to show browser notifications
+function showNotification(title, message, iconUrl = 'images/icon128.png') {
+  chrome.notifications.create({
+    type: 'basic',
+    iconUrl: chrome.runtime.getURL(iconUrl),
+    title: title,
+    message: message,
+    silent: false
+  });
+}
+
 // Initialize when the extension is installed or updated
 chrome.runtime.onInstalled.addListener(() => {
   console.log('AdGuard Home Manager extension installed');
   
   // Initialize storage with default values if needed
-  chrome.storage.sync.get(['adguardInstances', 'activeInstance'], function(result) {
+  chrome.storage.sync.get(['adguardInstances', 'activeInstance', 'showNotifications'], function(result) {
     if (!result.adguardInstances) {
       chrome.storage.sync.set({
         adguardInstances: [],
         activeInstance: null
+      });
+    }
+    
+    // Set default notification preference if not set
+    if (result.showNotifications === undefined) {
+      chrome.storage.sync.set({
+        showNotifications: true // Enable notifications by default
       });
     }
     
@@ -54,11 +73,15 @@ chrome.runtime.onInstalled.addListener(() => {
   });
   
   // Initialize local storage for instance-specific data
+  chrome.storage.local.get(['protectionEnabled'], function(result) {
+    previousProtectionStatus = result.protectionEnabled;
+  });
+
   chrome.storage.local.set({
     instanceData: {},
     connectionErrors: [],
     autoRefresh: true, // Enable auto refresh by default
-    refreshInterval: STATUS_CHECK_INTERVAL // Default refresh interval
+    refreshInterval: STATUS_CHECK_INTERVAL, // Default refresh interval
   });
 });
 
@@ -379,6 +402,12 @@ async function refreshStatus() {
     
     // Store the protection status
     console.log('Status refresh successful:', status);
+    
+    // Get previous settings
+    const { protectionEnabled: oldStatus } = await chrome.storage.local.get(['protectionEnabled']);
+    const { showNotifications } = await chrome.storage.sync.get(['showNotifications']);
+    
+    // Update storage
     chrome.storage.local.set({
       isConnected: true,
       protectionEnabled: status.protection_enabled,
@@ -386,6 +415,27 @@ async function refreshStatus() {
       // Clear any connection errors since we're now connected
       connectionErrors: []
     });
+    
+    // If status has changed and notifications are enabled, show notification
+    if (showNotifications && oldStatus !== status.protection_enabled) {
+      const instanceName = await getActiveInstanceName();
+      if (status.protection_enabled) {
+        showNotification(
+          `Protection Enabled`,
+          `AdGuard Home protection has been enabled for ${instanceName}.`,
+          'images/icon128.png'
+        );
+      } else {
+        showNotification(
+          `Protection Disabled`,
+          `AdGuard Home protection has been disabled for ${instanceName}.`,
+          'images/icon128.png'
+        );
+      }
+      
+      // Update previous status
+      previousProtectionStatus = status.protection_enabled;
+    }
     
     return { success: true, data: status };
   } catch (error) {
@@ -441,6 +491,20 @@ async function refreshStats() {
   }
 }
 
+// Function to get the active instance name
+async function getActiveInstanceName() {
+  try {
+    const { adguardInstances, activeInstance } = await chrome.storage.sync.get(['adguardInstances', 'activeInstance']);
+    if (!adguardInstances || !activeInstance) return "AdGuard Home";
+    
+    const instance = adguardInstances.find(inst => inst.id === activeInstance);
+    return instance ? instance.name : "AdGuard Home";
+  } catch (error) {
+    console.error('Failed to get active instance name:', error);
+    return "AdGuard Home";
+  }
+}
+
 // Listen for messages from the extension popup or settings page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   console.log('Received message:', message.action);
@@ -471,6 +535,21 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   
   if (message.action === 'getActiveInstanceId') {
     sendResponse({ instanceId: activeInstanceId });
+    return true;
+  }
+  
+  if (message.action === 'getActiveInstance') {
+    getActiveInstance()
+      .then(instance => {
+        sendResponse({ 
+          success: !!instance, 
+          instance: instance 
+        });
+      })
+      .catch(error => {
+        console.error('Error getting active instance:', error);
+        sendResponse({ success: false, error });
+      });
     return true;
   }
   
@@ -596,11 +675,35 @@ async function toggleProtection(enabled) {
     return await retryOperation(async () => {
       const result = await api.toggleProtection(enabled);
       
+      // Get settings
+      const { showNotifications } = await chrome.storage.sync.get(['showNotifications']);
+      
       // Update local storage with new protection state
       await chrome.storage.local.set({
         protectionEnabled: enabled,
         lastUpdated: new Date().toISOString()
       });
+      
+      // Show notification if settings allow
+      if (showNotifications && previousProtectionStatus !== enabled) {
+        const instanceName = await getActiveInstanceName();
+        if (enabled) {
+          showNotification(
+            `Protection Enabled`,
+            `AdGuard Home protection has been enabled for ${instanceName}.`,
+            'images/icon128.png'
+          );
+        } else {
+          showNotification(
+            `Protection Disabled`,
+            `AdGuard Home protection has been disabled for ${instanceName}.`,
+            'images/icon128.png'
+          );
+        }
+        
+        // Update previous status
+        previousProtectionStatus = enabled;
+      }
       
       return { success: true, data: result };
     });
@@ -622,6 +725,9 @@ async function disableTemporarily(minutes) {
     return await retryOperation(async () => {
       const result = await api.disableTemporarily(minutes);
       
+      // Get settings
+      const { showNotifications } = await chrome.storage.sync.get(['showNotifications']);
+      
       // Update local storage with new protection state
       await chrome.storage.local.set({
         protectionEnabled: false,
@@ -629,6 +735,19 @@ async function disableTemporarily(minutes) {
         temporaryDisableMinutes: minutes,
         temporaryDisableStartTime: new Date().toISOString()
       });
+      
+      // Show notification if settings allow
+      if (showNotifications && previousProtectionStatus !== false) {
+        const instanceName = await getActiveInstanceName();
+        showNotification(
+          `Protection Temporarily Disabled`,
+          `AdGuard Home protection has been disabled for ${instanceName} for ${minutes} minutes.`,
+          'images/icon128.png'
+        );
+        
+        // Update previous status
+        previousProtectionStatus = false;
+      }
       
       return { success: true, data: result };
     });

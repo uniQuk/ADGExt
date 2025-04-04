@@ -6,7 +6,8 @@
   "default_locale": "en",
   "permissions": [
     "storage",
-    "activeTab"
+    "activeTab",
+    "notifications"
   ],
   "host_permissions": [
     "http://*/",

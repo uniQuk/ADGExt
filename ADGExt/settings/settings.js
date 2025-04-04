@@ -116,18 +116,20 @@ function renderInstanceList() {
     
     if (instances.length === 0) {
         const noInstancesElement = createLocalizedElement('div', 'noInstances', {
-            className: 'no-instances'
+            className: 'no-instances fade-in'
         });
         instanceList.appendChild(noInstancesElement);
         return;
     }
     
-    instances.forEach(instance => {
+    instances.forEach((instance, index) => {
         const instanceElement = document.createElement('div');
-        instanceElement.classList.add('instance-item');
+        instanceElement.classList.add('instance-item', 'fade-in', 'transition-normal');
+        // Add a small delay based on index for staggered animation
+        instanceElement.style.animationDelay = `${index * 0.1}s`;
         
         if (instance.id === currentInstanceId) {
-            instanceElement.classList.add('active-instance');
+            instanceElement.classList.add('active-instance', 'pulse');
         }
         
         instanceElement.innerHTML = `
@@ -136,8 +138,8 @@ function renderInstanceList() {
                 <div class="instance-url">${instance.url}</div>
             </div>
             <div class="instance-actions">
-                <button class="btn-edit" data-id="${instance.id}">✏️</button>
-                <button class="btn-delete" data-id="${instance.id}">🗑️</button>
+                <button class="btn-edit ripple" data-id="${instance.id}">✏️</button>
+                <button class="btn-delete ripple" data-id="${instance.id}">🗑️</button>
             </div>
         `;
         
@@ -163,6 +165,19 @@ function renderInstanceList() {
             
             const instanceId = item.querySelector('.btn-edit').dataset.id;
             setActiveInstance(instanceId);
+        });
+        
+        // Add hover effect
+        item.addEventListener('mouseenter', () => {
+            if (item.classList.contains('active-instance')) return;
+            item.classList.add('scale-in');
+            item.classList.remove('scale-out');
+        });
+        
+        item.addEventListener('mouseleave', () => {
+            if (item.classList.contains('active-instance')) return;
+            item.classList.remove('scale-in');
+            item.classList.add('scale-out');
         });
     });
 }
@@ -191,7 +206,16 @@ function openAddInstanceModal() {
     modalTitle.textContent = getMessage('addInstance');
     instanceIdInput.value = '';
     instanceForm.reset();
+    
+    // Add animation classes
+    instanceModal.classList.add('fade-in');
     instanceModal.style.display = 'block';
+    
+    // Animate modal content
+    const modalContent = instanceModal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.classList.add('slide-in');
+    }
 }
 
 /**
@@ -210,15 +234,43 @@ function openEditInstanceModal(instanceId) {
     instanceUsernameInput.value = instance.username;
     instancePasswordInput.value = ''; // For security, don't pre-fill password
     
+    // Add animation classes
+    instanceModal.classList.add('fade-in');
     instanceModal.style.display = 'block';
+    
+    // Animate modal content
+    const modalContent = instanceModal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.classList.add('slide-in');
+    }
 }
 
 /**
- * Close the instance modal
+ * Close the instance modal with animation
  */
 function closeInstanceModal() {
-    instanceModal.style.display = 'none';
-    instanceForm.reset();
+    // Add fade-out animation
+    instanceModal.classList.add('fade-out');
+    instanceModal.classList.remove('fade-in');
+    
+    // Animate modal content
+    const modalContent = instanceModal.querySelector('.modal-content');
+    if (modalContent) {
+        modalContent.classList.add('slide-out');
+        modalContent.classList.remove('slide-in');
+    }
+    
+    // Wait for animation to complete before hiding
+    setTimeout(() => {
+        instanceModal.style.display = 'none';
+        instanceForm.reset();
+        
+        // Reset animation classes
+        instanceModal.classList.remove('fade-out');
+        if (modalContent) {
+            modalContent.classList.remove('slide-out');
+        }
+    }, 300); // Match animation duration
 }
 
 /**
