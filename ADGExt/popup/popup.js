@@ -410,6 +410,14 @@ document.addEventListener('DOMContentLoaded', function() {
     // Convert seconds to minutes for the API call
     const minutes = seconds / 60;
     
+    // Update UI immediately to provide feedback
+    tempDisableBtn.classList.add('counting');
+    const endTime = new Date(Date.now() + (seconds * 1000));
+    startCountdown(endTime);
+    
+    // Show status notification
+    showErrorNotification(getMessage('disablingTemporarily') || 'Disabling protection temporarily...');
+    
     // Send message to background script to disable protection temporarily
     chrome.runtime.sendMessage({
       action: 'disableTemporarily',
@@ -418,13 +426,25 @@ document.addEventListener('DOMContentLoaded', function() {
       if (response && response.success) {
         console.log(`Protection temporarily disabled for ${minutes} minutes`);
         
-        // Update button to show it's counting
-        tempDisableBtn.classList.add('counting');
+        // Update protection toggle to reflect state
+        protectionToggle.checked = false;
         
-        // Calculate end time and start countdown
-        const endTime = new Date(Date.now() + (seconds * 1000));
-        startCountdown(endTime);
+        // Update connection status display
+        if (response.data) {
+          displayConnectionStatus(response.data);
+        } else {
+          // If no data returned, update local state
+          updateProtectionStatus(false);
+        }
+        
+        // Show success notification
+        showSuccessNotification(getMessage('temporarilyDisabled') || 'Protection temporarily disabled');
       } else {
+        // Clear the counting state if failed
+        tempDisableBtn.classList.remove('counting');
+        tempDisableBtn.textContent = getMessage('disableTemporarily');
+        
+        // Show error notification
         showErrorNotification(response?.error?.message || getMessage('failedToDisable'));
       }
     });
@@ -575,15 +595,38 @@ document.addEventListener('DOMContentLoaded', function() {
   
   // Function to cancel temporary disable
   function cancelTemporaryDisable() {
+    // Update UI immediately to provide feedback
+    tempDisableBtn.textContent = getMessage('disableTemporarily');
+    tempDisableBtn.classList.remove('counting');
+    
+    // Clear the countdown interval
+    if (tempDisableBtn.dataset.countdownInterval) {
+      clearInterval(tempDisableBtn.dataset.countdownInterval);
+    }
+    
+    // Show status notification
+    showErrorNotification(getMessage('reEnablingProtection') || 'Re-enabling protection...');
+    
     chrome.runtime.sendMessage({ action: 'cancelTemporaryDisable' }, function(response) {
       if (response && response.success) {
-        // Clear the countdown interval
-        clearInterval(tempDisableBtn.dataset.countdownInterval);
+        // Update protection toggle to reflect state
+        protectionToggle.checked = true;
         
-        // Reset the button text and style
-        tempDisableBtn.textContent = getMessage('disableTemporarily');
-        tempDisableBtn.classList.remove('counting');
+        // Update connection status display
+        if (response.data) {
+          displayConnectionStatus(response.data);
+        } else {
+          // If no data returned, update local state
+          updateProtectionStatus(true);
+        }
+        
+        // Show success notification
+        showSuccessNotification(getMessage('protectionReEnabled') || 'Protection re-enabled');
       } else {
+        // Restore the counting state if failed
+        checkTemporaryDisableStatus();
+        
+        // Show error notification
         showErrorNotification(response?.error?.message || getMessage('failedToCancelDisable'));
       }
     });
@@ -592,30 +635,66 @@ document.addEventListener('DOMContentLoaded', function() {
   // Function to check if protection is temporarily disabled
   function checkTemporaryDisableStatus() {
     chrome.runtime.sendMessage({ action: 'getTemporaryDisableStatus' }, function(response) {
+      const tempDisableContainer = document.querySelector('.temporary-disable');
+      
       if (response && response.isTemporarilyDisabled && response.endTime) {
         console.log('Protection is temporarily disabled until:', response.endTime);
         
-        // Protection is temporarily disabled, show countdown
+        // Protection is temporarily disabled
+        // 1. Update the toggle to show protection is off
+        protectionToggle.checked = false;
+        
+        // 2. Show the temporary disable button
+        if (tempDisableContainer) {
+          tempDisableContainer.classList.remove('hidden');
+        }
+        
+        // 3. Set the button to counting state
         tempDisableBtn.classList.add('counting');
         
-        // Parse the end time if it's a string
+        // 4. Parse the end time if it's a string
         const endTime = typeof response.endTime === 'string' 
           ? new Date(response.endTime) 
           : response.endTime;
           
-        // Start the countdown with the current end time
+        // 5. Start the countdown with the current end time
         startCountdown(endTime);
+        
+        // 6. Update the status area to reflect protection is off
+        chrome.storage.local.get(['lastUpdated'], function(result) {
+          createStatusHtml(true, false, result.lastUpdated || new Date().toISOString());
+        });
       } else {
         console.log('Protection is not temporarily disabled');
         
-        // Make sure button is in the right state
-        tempDisableBtn.classList.remove('counting');
-        tempDisableBtn.textContent = getMessage('disableTemporarily');
-        
-        // Clear any existing interval
-        if (tempDisableBtn.dataset.countdownInterval) {
-          clearInterval(tempDisableBtn.dataset.countdownInterval);
-        }
+        // Get current protection status from storage
+        chrome.storage.local.get(['protectionEnabled', 'lastUpdated'], function(result) {
+          const isProtectionEnabled = result.protectionEnabled === true;
+          
+          // 1. Update the toggle to match stored protection state
+          protectionToggle.checked = isProtectionEnabled;
+          
+          // 2. Show/hide the temporary disable button based on protection state
+          if (tempDisableContainer) {
+            if (isProtectionEnabled) {
+              tempDisableContainer.classList.remove('hidden');
+            } else {
+              tempDisableContainer.classList.add('hidden');
+            }
+          }
+          
+          // 3. Reset the button to normal state
+          tempDisableBtn.classList.remove('counting');
+          tempDisableBtn.textContent = getMessage('disableTemporarily');
+          
+          // 4. Clear any existing interval
+          if (tempDisableBtn.dataset.countdownInterval) {
+            clearInterval(tempDisableBtn.dataset.countdownInterval);
+          }
+          
+          // 5. Update the status area
+          createStatusHtml(true, isProtectionEnabled, result.lastUpdated || new Date().toISOString());
+        });
       }
     });
   }
@@ -631,6 +710,9 @@ document.addEventListener('DOMContentLoaded', function() {
     // Animate the toggle
     animateProtectionToggle(protectionToggle, isEnabled);
     
+    // Update UI immediately to provide feedback
+    updateTemporaryDisableButton(isEnabled);
+    
     // Send message to background script
     chrome.runtime.sendMessage({
       action: 'toggleProtection',
@@ -643,16 +725,12 @@ document.addEventListener('DOMContentLoaded', function() {
         // Update protection status in UI
         displayConnectionStatus(response.data);
         
-        // Toggle temporary disable section
-        const temporaryDisable = document.querySelector('.temporary-disable');
-        if (temporaryDisable) {
-          if (isEnabled) {
-            temporaryDisable.classList.remove('hidden');
-            temporaryDisable.classList.add('fade-in');
-          } else {
-            temporaryDisable.classList.add('hidden');
-            temporaryDisable.classList.remove('fade-in');
-          }
+        // Refresh stats
+        fetchAndDisplayStats();
+        
+        // If disabling protection while in temporary disable mode, update button state
+        if (!isEnabled) {
+          checkTemporaryDisableStatus();
         }
       } else {
         // Show error notification
@@ -663,6 +741,9 @@ document.addEventListener('DOMContentLoaded', function() {
         
         // Add shake animation to the toggle
         animateShake(protectionToggle.closest('.toggle-switch'));
+        
+        // Restore previous UI state
+        updateTemporaryDisableButton(!isEnabled);
         
         // Show error details if available
         if (response && response.error) {
@@ -676,10 +757,33 @@ document.addEventListener('DOMContentLoaded', function() {
   function updateTemporaryDisableButton(isProtectionEnabled) {
     const tempDisableContainer = document.querySelector('.temporary-disable');
     
-    if (isProtectionEnabled) {
-      tempDisableContainer.classList.remove('hidden');
-    } else {
-      tempDisableContainer.classList.add('hidden');
+    if (tempDisableContainer) {
+      // Show the disable container if protection is enabled or we're in a temporarily disabled state
+      chrome.runtime.sendMessage({ action: 'getTemporaryDisableStatus' }, function(response) {
+        const isTemporarilyDisabled = response && response.isTemporarilyDisabled;
+        
+        if (isProtectionEnabled) {
+          // Protection is enabled - show the disable button
+          tempDisableContainer.classList.remove('hidden');
+          tempDisableBtn.classList.remove('counting');
+          tempDisableBtn.textContent = getMessage('disableTemporarily');
+        } else if (isTemporarilyDisabled) {
+          // Protection is temporarily disabled - show countdown
+          tempDisableContainer.classList.remove('hidden');
+          tempDisableBtn.classList.add('counting');
+          
+          // Parse the end time if it's a string
+          const endTime = typeof response.endTime === 'string' 
+            ? new Date(response.endTime) 
+            : response.endTime;
+          
+          // Start the countdown
+          startCountdown(endTime);
+        } else {
+          // Protection is permanently disabled - hide the button
+          tempDisableContainer.classList.add('hidden');
+        }
+      });
     }
   }
   

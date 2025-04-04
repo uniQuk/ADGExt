@@ -312,5 +312,25 @@
   "openingDashboard": {
     "message": "Opening AdGuard Home dashboard...",
     "description": "Message shown when opening the dashboard"
+  },
+  "temporarilyDisabled": {
+    "message": "Protection temporarily disabled",
+    "description": "Message shown when protection is temporarily disabled"
+  },
+  "disablingTemporarily": {
+    "message": "Disabling protection temporarily...",
+    "description": "Message shown when temporarily disabling protection"
+  },
+  "reEnablingProtection": {
+    "message": "Re-enabling protection...",
+    "description": "Message shown when re-enabling protection"
+  },
+  "protectionReEnabled": {
+    "message": "Protection re-enabled",
+    "description": "Message shown when protection is re-enabled"
+  },
+  "protectionAutoReEnabled": {
+    "message": "Protection has been automatically re-enabled",
+    "description": "Message shown when protection is automatically re-enabled after timeout"
   }
 } 
