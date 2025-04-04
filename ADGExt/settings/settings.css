@@ -100,30 +100,30 @@ button {
 }
 
 .container {
-    width: 380px;
-    padding: 12px;
+    width: 280px;
+    padding: 10px;
 }
 
 header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 12px;
+    margin-bottom: 10px;
     border-bottom: 1px solid var(--border-color);
     padding-bottom: 8px;
 }
 
 h1 {
-    font-size: 18px;
+    font-size: 14px;
     font-weight: 600;
     color: var(--accent-color);
 }
 
 h2 {
-    font-size: 15px;
-    margin-bottom: 10px;
+    font-size: 12px;
+    margin-bottom: 8px;
     font-weight: 600;
-    color: #444;
+    color: #374151;
 }
 
 .btn-back {
@@ -155,17 +155,17 @@ h2 {
 .settings-section {
     background-color: var(--section-bg);
     border-radius: 6px;
-    padding: 12px;
-    margin-bottom: 12px;
-    box-shadow: 0 1px 3px var(--shadow-color);
+    padding: 10px;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 2px var(--shadow-color);
 }
 
 .setting-item {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 10px;
-    padding-bottom: 8px;
+    margin-bottom: 8px;
+    padding-bottom: 6px;
     border-bottom: 1px solid var(--border-color);
 }
 
@@ -203,56 +203,51 @@ select:focus {
 }
 
 .btn-primary {
-    background-color: var(--accent-color);
-    color: var(--button-text);
+    background-color: #2563eb;
+    color: white;
     border: none;
     border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: 6px 10px;
     cursor: pointer;
-    width: 100%;
     font-weight: 500;
-    transition: background-color 0.2s;
+    font-size: 12px;
+    transition: all 0.2s;
 }
 
 .btn-primary:hover {
-    background-color: var(--accent-hover);
+    background-color: #1d4ed8;
 }
 
 .btn-secondary {
-    background-color: #f1f1f1;
-    color: #444;
-    border: none;
+    background-color: #f3f4f6;
+    color: #4b5563;
+    border: 1px solid #d1d5db;
     border-radius: 4px;
-    padding: 8px 12px;
-    font-size: 13px;
+    padding: 6px 10px;
     cursor: pointer;
+    font-weight: 500;
+    font-size: 12px;
+    transition: all 0.2s;
 }
 
 .btn-secondary:hover {
-    background-color: #e0e0e0;
+    background-color: #e5e7eb;
 }
 
 .instance-list {
-    margin-bottom: 12px;
+    margin-bottom: 10px;
 }
 
 .instance-item {
     background-color: var(--input-bg);
     border: 1px solid var(--input-border);
-    border-radius: 6px;
-    padding: 10px;
-    margin-bottom: 8px;
+    border-radius: 4px;
+    padding: 8px;
+    margin-bottom: 6px;
     display: flex;
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 1px 2px var(--shadow-color);
-}
-
-.instance-item.active-instance {
-    border-color: var(--accent-color);
-    border-width: 2px;
-    box-shadow: 0 0 0 2px rgba(59, 122, 240, 0.1);
 }
 
 .instance-info {
@@ -260,27 +255,29 @@ select:focus {
 }
 
 .instance-name {
-    font-weight: 600;
-    font-size: 14px;
+    font-weight: 500;
+    font-size: 12px;
+    color: var(--text-color);
     margin-bottom: 2px;
 }
 
 .instance-url {
-    font-size: 12px;
+    font-size: 10px;
     color: #888;
 }
 
 .instance-actions {
     display: flex;
-    gap: 6px;
+    gap: 4px;
 }
 
-.btn-edit, .btn-delete {
+.btn-edit, .btn-delete, .btn-set-active {
     background: none;
     border: none;
     cursor: pointer;
-    padding: 4px;
-    font-size: 14px;
+    padding: 3px 5px;
+    font-size: 11px;
+    border-radius: 3px;
 }
 
 .btn-edit {
@@ -306,12 +303,11 @@ select:focus {
 .modal-content {
     position: relative;
     background-color: var(--modal-bg);
-    margin: 10% auto;
-    padding: 15px;
+    margin: 15% auto;
+    padding: 12px;
     border-radius: 6px;
-    width: 90%;
-    max-width: 350px;
-    box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
+    width: 260px;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
 .close {
@@ -334,16 +330,17 @@ select:focus {
 .form-group label {
     display: block;
     margin-bottom: 4px;
+    font-size: 12px;
 }
 
 .form-group input {
     width: 100%;
-    padding: 7px;
-    border: 1px solid var(--input-border);
-    border-radius: 4px;
     background-color: var(--input-bg);
     color: var(--text-color);
-    font-size: 13px;
+    border: 1px solid var(--input-border);
+    border-radius: 4px;
+    padding: 6px;
+    font-size: 12px;
 }
 
 .form-group input:focus {
@@ -355,8 +352,8 @@ select:focus {
 .form-actions {
     display: flex;
     justify-content: flex-end;
-    gap: 8px;
-    margin-top: 15px;
+    gap: 6px;
+    margin-top: 12px;
 }
 
 .form-actions button {
@@ -561,4 +558,46 @@ select:focus {
     body.auto-theme .close:hover {
         color: #e4e4e7;
     }
+} 
+
+/* Make buttons more compact */
+.btn-primary, .btn-secondary {
+    padding: 6px 10px;
+    font-size: 12px;
+}
+
+/* Make select elements more compact */
+select {
+    padding: 5px 6px;
+    font-size: 12px;
+}
+
+.btn-edit {
+    color: #2563eb;
+}
+
+.btn-edit:hover {
+    background-color: #eff6ff;
+}
+
+.btn-delete {
+    color: #ef4444;
+}
+
+.btn-delete:hover {
+    background-color: #fee2e2;
+}
+
+.btn-set-active {
+    color: #10b981;
+}
+
+.btn-set-active:hover {
+    background-color: #d1fae5;
+}
+
+/* Make sure the Add New Instance button isn't full width */
+#btnAddInstance {
+    width: auto;
+    display: inline-block;
 } 
