@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AdGuard Home Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AdGuard Home</h1>
+    </div>
+    
+    <div id="connection-form">
+      <h2>Connect to AdGuard Home</h2>
+      <form id="connect-form">
+        <div class="form-group">
+          <label for="url">Server URL:</label>
+          <input type="text" id="url" placeholder="http://localhost:3000" required>
+        </div>
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="username" required>
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" required>
+        </div>
+        <button type="submit" id="connect-button">Connect</button>
+      </form>
+    </div>
+    
+    <div id="stats-container" class="hidden">
+      <!-- Stats will be displayed here once connected -->
+    </div>
+    
+    <div class="footer">
+      <p>v0.1.0</p>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 

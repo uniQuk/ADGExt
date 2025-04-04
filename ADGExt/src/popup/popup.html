@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>AdGuard Home Manager</title>
+  <link rel="stylesheet" href="popup.css">
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>AdGuard Home</h1>
+    </div>
+    
+    <div id="connection-form">
+      <h2>Connect to AdGuard Home</h2>
+      <form id="connect-form">
+        <div class="form-group">
+          <label for="url">Server URL:</label>
+          <input type="text" id="url" placeholder="http://localhost:3000" required>
+          <div class="error-message" id="url-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="username">Username:</label>
+          <input type="text" id="username" required>
+          <div class="error-message" id="username-error"></div>
+        </div>
+        <div class="form-group">
+          <label for="password">Password:</label>
+          <input type="password" id="password" required>
+          <div class="error-message" id="password-error"></div>
+        </div>
+        <div class="form-group checkbox">
+          <input type="checkbox" id="remember" checked>
+          <label for="remember">Remember credentials</label>
+        </div>
+        <div class="button-group">
+          <button type="submit" id="connect-button">Connect</button>
+        </div>
+        <div class="connection-error" id="connection-error"></div>
+      </form>
+    </div>
+    
+    <div id="stats-container" class="hidden">
+      <div class="status-header">
+        <div class="status-indicator">
+          <span class="status-label">Status:</span>
+          <span class="status-value" id="status-value">Connected</span>
+        </div>
+        <button id="disconnect-button" class="small-button">Disconnect</button>
+      </div>
+      <div class="stats-content">
+        <p>Your AdGuard Home statistics will appear here.</p>
+      </div>
+    </div>
+    
+    <div class="footer">
+      <p>v0.1.0</p>
+    </div>
+  </div>
+  
+  <script src="popup.js"></script>
+</body>
+</html> 
